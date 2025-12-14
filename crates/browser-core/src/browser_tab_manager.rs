@@ -3,17 +3,16 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use tracing::{info, error, debug, warn};
+use tracing::{info, debug, warn};
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
 use tauri::State;
 
 use crate::tab_manager::TabIPManager;
 use crate::webview_manager::{WebviewManager, WebviewTab};
-use crate::tab_isolation::{TabProfile, TabStatus};
-use crate::proxy::{ProxySettings, ProxyType};
+use crate::tab_isolation::TabProfile;
+use crate::proxy::ProxySettings;
 use virtual_ip::VirtualIP;
-use crate::fingerprint::BrowserFingerprint;
 use virtual_ip::IPGenerator;
 use sqlx::SqlitePool;
 
@@ -381,7 +380,7 @@ impl BrowserTabManager {
     }
 
     /// Create proxy configuration from virtual IP
-    fn create_proxy_from_virtual_ip(&self, virtual_ip: &VirtualIP) -> Result<Option<ProxySettings>> {
+    fn create_proxy_from_virtual_ip(&self, _virtual_ip: &VirtualIP) -> Result<Option<ProxySettings>> {
         // For now, return None - in a real implementation, you'd create
         // a proxy config that routes through the virtual IP
         Ok(None)

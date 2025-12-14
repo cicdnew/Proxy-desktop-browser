@@ -157,8 +157,8 @@ impl<'a> SecurityManager<'a> {
             }
         }
 
-        // Validate port range
-        if port == 0 || port > 65535 {
+        // Validate port range (port is u16, max is 65535)
+        if port == 0 {
             return Err(anyhow!("Invalid proxy port: must be 1-65535"));
         }
 

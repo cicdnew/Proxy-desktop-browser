@@ -5,7 +5,6 @@ use tokio::sync::RwLock;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tracing::{info, error, debug};
-use uuid::Uuid;
 
 /// PAC (Proxy Auto-Configuration) file server for configuring browser proxies
 pub struct PacServer {

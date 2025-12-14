@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tauri::{AppHandle, Manager, Window};
+use tauri::{AppHandle, Manager, WebviewWindow};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
@@ -34,35 +34,35 @@ impl WebviewManager {
     }
 
     /// Create a new webview tab with native window and proxy settings
-    pub fn create_tab_with_proxy_sync(&self, initial_url: Option<String>, proxy_url: Option<String>, window_label: String, tab_id: String) -> Result<(WebviewTab, Window)> {
+    pub fn create_tab_with_proxy_sync(&self, initial_url: Option<String>, proxy_url: Option<String>, window_label: String, tab_id: String) -> Result<(WebviewTab, WebviewWindow)> {
         let url = initial_url.unwrap_or_else(|| "https://www.google.com".to_string());
         
-        // Create new webview window with proxy configuration
-        let mut builder = tauri::WindowBuilder::new(
+        // Apply proxy settings if provided (environment variables for now)
+        let title = if let Some(ref proxy) = proxy_url {
+            // For now, use environment variables (affects all windows)
+            // TODO: Implement proper per-webview proxy with WebView2 environment
+            if cfg!(target_os = "windows") {
+                std::env::set_var("HTTP_PROXY", proxy);
+                std::env::set_var("HTTPS_PROXY", proxy);
+            }
+            format!("New Tab - Virtual IP Browser ({})", proxy)
+        } else {
+            "New Tab - Virtual IP Browser".to_string()
+        };
+        
+        // Create new webview window with Tauri v2 API
+        let window = tauri::WebviewWindowBuilder::new(
             &self.app_handle,
-            window_label.clone(),
-            tauri::WindowUrl::External(url.parse()?),
+            &window_label,
+            tauri::WebviewUrl::External(url.parse()?),
         )
-        .title("New Tab - Virtual IP Browser")
+        .title(&title)
         .inner_size(1200.0, 800.0)
         .min_inner_size(400.0, 300.0)
         .center()
         .decorations(true)
-        .resizable(true);
-        
-        // Apply proxy settings if provided
-        if let Some(proxy) = proxy_url {
-            builder = builder.title(format!("New Tab - Virtual IP Browser ({})", proxy));
-            
-            // For now, use environment variables (affects all windows)
-            // TODO: Implement proper per-webview proxy with WebView2 environment
-            if cfg!(target_os = "windows") {
-                std::env::set_var("HTTP_PROXY", &proxy);
-                std::env::set_var("HTTPS_PROXY", &proxy);
-            }
-        }
-        
-        let window = builder.build()?;
+        .resizable(true)
+        .build()?;
         
         let tab = WebviewTab {
             tab_id: tab_id.clone(),
@@ -102,7 +102,7 @@ impl WebviewManager {
         let tabs = self.tabs.read().await;
         let tab = tabs.get(tab_id).ok_or_else(|| anyhow!("Tab not found"))?;
         
-        if let Some(window) = self.app_handle.get_window(&tab.window_label) {
+        if let Some(window) = self.app_handle.get_webview_window(&tab.window_label) {
             window.eval(&format!("window.location.href = '{}';", url))?;
             
             // Update tab info
@@ -127,7 +127,7 @@ impl WebviewManager {
         let tabs = self.tabs.read().await;
         let tab = tabs.get(tab_id).ok_or_else(|| anyhow!("Tab not found"))?;
         
-        if let Some(window) = self.app_handle.get_window(&tab.window_label) {
+        if let Some(window) = self.app_handle.get_webview_window(&tab.window_label) {
             window.close()?;
         }
         
@@ -142,7 +142,7 @@ impl WebviewManager {
         let tabs = self.tabs.read().await;
         let tab = tabs.get(tab_id).ok_or_else(|| anyhow!("Tab not found"))?;
         
-        if let Some(window) = self.app_handle.get_window(&tab.window_label) {
+        if let Some(window) = self.app_handle.get_webview_window(&tab.window_label) {
             window.set_focus()?;
             window.unminimize()?;
         }

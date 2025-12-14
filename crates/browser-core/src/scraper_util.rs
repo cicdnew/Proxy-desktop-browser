@@ -1,9 +1,7 @@
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use scraper::{Html, Selector};
 use tracing::{info, warn, error, debug};
-use std::collections::HashMap;
 use chrono::Utc;
-use uuid::Uuid;
 
 use crate::http_client::HttpClient;
 use crate::proxy::{FreeProxy, ProxyType};

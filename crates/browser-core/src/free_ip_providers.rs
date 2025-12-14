@@ -3,7 +3,6 @@ use serde::Deserialize;
 use async_trait::async_trait;
 use std::time::Duration;
 use std::collections::HashMap;
-use rand::seq::SliceRandom;
 
 use crate::http_client::HttpClient;
 use crate::proxy::{FreeProxy, ProxyType};
@@ -211,11 +210,15 @@ impl FreeIpProviderManager {
             return proxies;
         }
 
-        // Generate random sample indices before any async operations
-        let mut rng = rand::thread_rng();
-        let mut sample_indices: Vec<usize> = (0..proxies.len()).collect();
-        sample_indices.shuffle(&mut rng);
-        sample_indices.truncate(sample_size);
+        // Generate random sample indices in a separate scope to ensure rng is dropped before await
+        let sample_indices: Vec<usize> = {
+            use rand::seq::SliceRandom;
+            let mut rng = rand::thread_rng();
+            let mut indices: Vec<usize> = (0..proxies.len()).collect();
+            indices.shuffle(&mut rng);
+            indices.truncate(sample_size);
+            indices
+        };
         
         // Now we can safely use async operations
         let mut working_proxies = Vec::new();

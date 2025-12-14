@@ -7,11 +7,11 @@ use tokio::sync::RwLock;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use tracing::{debug, info};
-use crate::proxy::{ProxySettings, ProxyType, FreeProxy};
-use crate::local_proxy::{LocalProxyManager, LocalProxyServer};
+use crate::proxy::{ProxySettings, FreeProxy};
+use crate::local_proxy::LocalProxyManager;
 use crate::pac_server::PacManager;
 use crate::free_ip_providers::FreeIpProviderManager;
-use crate::proxy_rotation::{ProxyRotationManager, ProxyRotationStrategy, ProxyMetrics, ProxySessionStats};
+use crate::proxy_rotation::{ProxyRotationManager, ProxyRotationStrategy, ProxySessionStats};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebviewTab {
@@ -159,7 +159,7 @@ impl WebviewManager {
         };
         
         // Register PAC file for this tab
-        let pac_url = self.pac_manager
+        let _pac_url = self.pac_manager
             .register_proxy_for_tab(&tab_id, proxy_port)
             .await
             .map_err(|e| anyhow!("Failed to register PAC: {}", e))?;
@@ -275,6 +275,7 @@ impl WebviewManager {
     }
 
     /// Configure proxy settings in a WebView using PAC URL
+    #[allow(dead_code)]
     async fn configure_proxy_in_webview(&self, window: &WebviewWindow, pac_url: &str) -> Result<()> {
         // JavaScript to configure proxy settings
         // Note: WebView2 doesn't support direct PAC configuration via JavaScript
@@ -544,7 +545,7 @@ pub async fn get_tab_proxy_info(
 
 #[tauri::command]
 pub async fn fetch_proxies_from_provider(
-    app_handle: tauri::AppHandle,
+    _app_handle: tauri::AppHandle,
     provider_name: String,
 ) -> Result<Vec<FreeProxy>, String> {
     use crate::free_ip_providers::{FreeIpProvider, FreeIpProviderManager};
@@ -568,7 +569,7 @@ pub async fn fetch_proxies_from_provider(
 
 #[tauri::command]
 pub async fn test_proxy(
-    app_handle: tauri::AppHandle,
+    _app_handle: tauri::AppHandle,
     proxy: FreeProxy,
 ) -> Result<crate::proxy::ProxyTestResult, String> {
     use crate::free_ip_providers::FreeIpProviderManager;

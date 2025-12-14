@@ -1,16 +1,14 @@
 use anyhow::{anyhow, Result};
 use chromiumoxide::{Browser, BrowserConfig, Page};
-use chromiumoxide::cdp::browser_protocol::page::NavigateParams;
 use futures::StreamExt;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{info, error, debug, warn};
+use tracing::{info, debug, warn};
 
-use crate::proxy::{ProxySettings, ProxyType, FreeProxy};
+use crate::proxy::ProxySettings;
 
 /// Browser engine type selection
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]

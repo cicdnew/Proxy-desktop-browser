@@ -4,13 +4,12 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use futures::{SinkExt, StreamExt};
-use tracing::{info, error, debug, warn};
+use tracing::{info, error, debug};
 use uuid::Uuid;
 use std::net::SocketAddr;
 use base64::engine::Engine;
 
-use crate::proxy::{ProxySettings, ProxyType};
+use crate::proxy::ProxySettings;
 
 /// Local proxy server for routing tab traffic through upstream proxies
 pub struct LocalProxyServer {

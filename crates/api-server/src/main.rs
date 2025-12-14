@@ -1,6 +1,7 @@
 use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use sqlx::SqlitePool;
 
 use api_server::ApiServer;
 use browser_core::TabIPManager;
@@ -36,7 +37,12 @@ async fn main() -> anyhow::Result<()> {
         IPGenerator::new(countries, ranges)
     };
 
-    let tab_manager = Arc::new(Mutex::new(TabIPManager::new(ip_generator.clone())));
+    // Create in-memory SQLite database for the API server
+    let db_pool = SqlitePool::connect("sqlite::memory:").await?;
+    
+    let tab_manager = Arc::new(Mutex::new(
+        TabIPManager::new(ip_generator.clone(), db_pool).await?
+    ));
     let server = ApiServer::new(tab_manager, Arc::new(ip_generator));
 
     let port: u16 = env::var("PORT")

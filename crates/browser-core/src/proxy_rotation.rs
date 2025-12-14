@@ -7,7 +7,7 @@ use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
 use serde::{Deserialize, Serialize};
 
-use crate::proxy::{FreeProxy, ProxyType};
+use crate::proxy::FreeProxy;
 use crate::free_ip_providers::FreeIpProviderManager;
 
 /// Manages proxy rotation strategies for browser tabs.
@@ -92,7 +92,7 @@ impl ProxyRotationManager {
         if let Some(session) = sessions.get_mut(tab_id) {
             // Check if we need domain-based proxy
             if let (Some(domain), ProxyRotationStrategy::DomainBased) = (domain, &self.strategy) {
-                let proxy_key = format!("{}:{}", tab_id, domain);
+                let _proxy_key = format!("{}:{}", tab_id, domain);
                 if let Some(proxy_id) = session.domain_proxy_map.get(domain) {
                     // Use the same proxy for this domain
                     if let Some(proxy) = self.get_proxy_by_id(proxy_id).await? {

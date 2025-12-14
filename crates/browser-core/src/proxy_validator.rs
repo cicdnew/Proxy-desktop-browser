@@ -262,6 +262,7 @@ impl ProxyValidator {
     }
 }
 
+#[allow(dead_code)]
 pub struct ProxyHealthChecker {
     validator: ProxyValidator,
     check_interval: Duration,

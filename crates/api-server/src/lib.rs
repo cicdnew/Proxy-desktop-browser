@@ -46,9 +46,8 @@ impl ApiServer {
         let app = Arc::new(self).router().await;
         let addr = format!("127.0.0.1:{port}");
         info!("API server listening on http://{addr}");
-        axum::Server::bind(&addr.parse()?)
-            .serve(app.into_make_service())
-            .await?;
+        let listener = tokio::net::TcpListener::bind(&addr).await?;
+        axum::serve(listener, app).await?;
         Ok(())
     }
 }
