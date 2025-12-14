@@ -1,0 +1,72 @@
+[package]
+name = "browser-core"
+version = "1.0.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+# Workspace dependencies
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+uuid = { workspace = true }
+rand = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+
+# HTTP - UPGRADED
+reqwest = { workspace = true }
+reqwest-middleware = { workspace = true }
+reqwest-retry = { workspace = true }
+
+# Web Scraping - NEW
+scraper = { workspace = true }
+select = { workspace = true }
+
+# Database - SWITCHED TO ASYNC
+sqlx = { workspace = true }
+
+# Security - NEW
+keyring = { workspace = true }
+validator = { workspace = true }
+ammonia = { workspace = true }
+governor = { workspace = true }
+aes-gcm = { workspace = true }
+argon2 = { workspace = true }
+base64 = { workspace = true }
+
+# Configuration
+config = { workspace = true }
+
+# Async utilities
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# Internal dependencies
+virtual-ip = { path = "../virtual-ip" }
+
+# Tauri dependencies (for commands)
+tauri = { workspace = true }
+
+# SQLite for storage
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# Local proxy server dependencies
+# No additional dependencies needed - all available from workspace
+
+# Additional dependencies
+url = "2.5"
+mime = "0.3"
+regex = "1.10"
+sha2 = "0.10"
+hex = "0.4"
+
+# Chromium Engine Integration
+chromiumoxide = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockito = "1.4"
+tempfile = "3.10"
