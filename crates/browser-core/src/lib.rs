@@ -19,6 +19,18 @@ pub mod proxy_validator;
 pub mod chromium_engine;
 pub mod ad_verification;
 
+// V1000 Feature Modules - Phase 1: Foundation & Stability (v3-v10)
+pub mod memory_profiler;
+pub mod error_recovery;
+pub mod performance_optimizer;
+
+// V1000 Feature Modules - Phase 2: Feature Expansion (v10-v100)
+pub mod network_intelligence;
+pub mod privacy_fortress;
+
+// V1000 Experimental Features (EXP-1001 to EXP-20005)
+pub mod experimental;
+
 pub use database::{Database, DatabaseError};
 pub use tab_manager::TabIPManager;
 pub use tab_isolation::{TabProfile, NetworkConfig, TabStatus};
@@ -39,3 +51,35 @@ pub use proxy_rotation::{ProxyRotationManager, ProxyRotationStrategy, ProxyMetri
 pub use proxy_validator::{ProxyValidator, ProxyValidatorConfig, ValidationResult, ProxyHealthChecker};
 pub use chromium_engine::{ChromiumEngine, ChromiumEngineConfig, BrowserEngineManager, BrowserEngineType, ChromiumTab, EngineCapabilities};
 pub use ad_verification::{AdVerificationManager, AdVerificationConfig, ImpressionVerification, ImpressionData, VastVerification, VpaidVerification, VerificationSession, SessionStats, ViewabilityStatus, FraudSignal, AdFormat, VerificationStandard};
+
+// V1000 Phase 1 exports
+pub use memory_profiler::{MemoryProfiler, MemorySnapshot, MemoryStats, MemoryThresholds, MemoryAlert, LeakReport, GcRecommendation};
+pub use error_recovery::{ErrorRecoveryManager, ErrorRecoveryConfig, ErrorCategory, RecoveryStrategy, RecoveryResult, ErrorStats, CrashPrediction};
+pub use performance_optimizer::{PerformanceOptimizer, PerformanceConfig, PerformanceReport, CoreWebVitals, CacheStats, CachePriority};
+
+// V1000 Phase 2 exports
+pub use network_intelligence::{NetworkIntelligence, NetworkIntelligenceConfig, NetworkIntelligenceReport, TrafficReport, QosPriority};
+pub use privacy_fortress::{PrivacyFortress, PrivacyConfig, PrivacyReport, PrivacyGrade, TrackerStats, CookieIsolationLevel};
+
+// V1000 Experimental Feature exports
+pub use experimental::{
+    ExperimentalFeaturesManager, ExperimentalFeatureInfo,
+    // Core Engine Experiments
+    MultiEngineSystem, EngineType, ProcessIsolationConfig, SandboxLevel, WasiBrowser, WasiCapabilities,
+    // Network Experiments
+    MeshProxyNetwork, MeshNode, OnionRouter, DnsResolver, DnsStrategy,
+    // Security Experiments
+    ZkAuthSystem, SecureEnclaveManager, EnclaveType, MemorySafeSandbox, BehavioralAuth,
+    // Privacy Experiments
+    DifferentialPrivacy, DecoyTrafficGenerator, AntiCorrelationSystem,
+    // AI/ML Experiments
+    LocalLlm, VisualEngine, IntelligentFormFiller,
+    // Rendering Experiments
+    GpuRenderConfig, Spatial3DConfig, AdaptiveRenderer,
+    // Cryptography Experiments
+    PostQuantumCrypto, PqcAlgorithm,
+    // Decentralized Experiments
+    IpfsBrowser, BlockchainDns, DecentralizedIdentity,
+    // Quantum Experiments
+    QuantumRng,
+};
