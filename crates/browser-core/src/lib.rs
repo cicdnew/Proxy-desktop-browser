@@ -31,6 +31,10 @@ pub mod privacy_fortress;
 // V1000 Experimental Features (EXP-1001 to EXP-20005)
 pub mod experimental;
 
+// V1000 Additional Feature Modules
+pub mod automation;
+pub mod content_enhancement;
+
 pub use database::{Database, DatabaseError};
 pub use tab_manager::TabIPManager;
 pub use tab_isolation::{TabProfile, NetworkConfig, TabStatus};
@@ -82,4 +86,21 @@ pub use experimental::{
     IpfsBrowser, BlockchainDns, DecentralizedIdentity,
     // Quantum Experiments
     QuantumRng,
+};
+
+// V1000 Automation System exports
+pub use automation::{
+    AutomationManager, AutomationStats, 
+    VisualAutomationBuilder, Workflow, AutomationStep, StepType,
+    NaturalLanguageAutomation, ActionRecorder, RecordedAction, ActionType,
+    DistributedAutomation, AutomationNode, NodeStatus, DistributedTask, TaskStatus,
+};
+
+// V1000 Content Enhancement exports
+pub use content_enhancement::{
+    ContentEnhancementManager,
+    ReaderMode, ReaderModeConfig, ReaderTheme, ExtractedArticle,
+    MediaPlayer, MediaPlayerConfig, MediaInfo, MediaType, VideoQuality,
+    ContentTransformer, TransformationType,
+    AccessibilityManager, AccessibilityConfig, ColorBlindnessMode,
 };

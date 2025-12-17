@@ -522,6 +522,9 @@ impl ConnectionPool {
 
     /// Get or create connection
     pub fn get_connection(&mut self, host: &str, port: u16, current_time: u128) -> Option<ConnectionInfo> {
+        // Determine protocol from port
+        let protocol = if port == 443 { "https" } else { "http" }.to_string();
+        
         let conns = self.connections.entry(host.to_string()).or_insert_with(Vec::new);
         
         // Find idle connection
@@ -538,7 +541,7 @@ impl ConnectionPool {
                 id: uuid::Uuid::new_v4().to_string(),
                 host: host.to_string(),
                 port,
-                protocol: "https".to_string(),
+                protocol: protocol.clone(),
                 created_at: current_time,
                 last_used: current_time,
                 request_count: 1,

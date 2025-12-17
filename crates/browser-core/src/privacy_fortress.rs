@@ -459,11 +459,17 @@ impl PrivacyCookieManager {
             CookieIsolationLevel::Container => format!("container:{}", context_id),
         };
 
-        self.containers.entry(key.clone()).or_insert_with(|| CookieContainer {
-            id: key,
-            domain: domain.to_string(),
-            cookies: HashMap::new(),
-            created_at: 0,
+        self.containers.entry(key.clone()).or_insert_with(|| {
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis();
+            CookieContainer {
+                id: key,
+                domain: domain.to_string(),
+                cookies: HashMap::new(),
+                created_at: now,
+            }
         })
     }
 
