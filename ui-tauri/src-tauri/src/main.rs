@@ -32,7 +32,11 @@ struct AppState {
 }
 
 #[tauri::command]
-async fn create_tab(state: State<'_, AppState>, app_handle: tauri::AppHandle, country_code: String) -> Result<TabResponse, String> {
+async fn create_tab(
+    state: State<'_, AppState>,
+    app_handle: tauri::AppHandle,
+    country_code: String
+) -> Result<TabResponse, String> {
     info!("Creating tab for country: {}", country_code);
     
     // Generate virtual IP for the country

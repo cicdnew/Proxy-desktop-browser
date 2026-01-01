@@ -3,7 +3,7 @@
   import { listen } from '@tauri-apps/api/event';
   import type { 
     WebviewTab, FreeProxy, PublicIpInfo, HistoryEntry, Bookmark, BrowserSettings,
-    NavigationChangedPayload, TitleChangedPayload 
+    NavigationChangedPayload, TitleChangedPayload, ProxySessionStats 
   } from '../../lib/types';
 
   
@@ -33,7 +33,7 @@
   let proxies = $state<FreeProxy[]>([]);
   let fetchingProxies = $state(false);
   let rotationStrategy = $state('round_robin');
-  let proxyStats = $state<any>(null);
+  let proxyStats = $state<ProxySessionStats | null>(null);
   let validatingProxy = $state(false);
   
   // Browser data
