@@ -2,61 +2,13 @@ pub mod prelude;
 
 // Re-export prelude utilities for easier access
 pub use prelude::{
-
-// Configuration management exports
-pub use config_manager::{
-    ConfigManager, AppConfig,
-    GeneralConfig, ProxyConfig, PrivacyConfig, PerformanceConfig,
-    NetworkConfig as AppNetworkConfig, StorageConfig, LoggingConfig, FeatureFlags
-};
     OptionExt, ResultExt, unix_timestamp, unix_timestamp_ms,
-
-// Configuration management exports
-pub use config_manager::{
-    ConfigManager, AppConfig,
-    GeneralConfig, ProxyConfig, PrivacyConfig, PerformanceConfig,
-    NetworkConfig as AppNetworkConfig, StorageConfig, LoggingConfig, FeatureFlags
-};
     RetryConfig, retry_async, RateLimiter,
-
-// Configuration management exports
-pub use config_manager::{
-    ConfigManager, AppConfig,
-    GeneralConfig, ProxyConfig, PrivacyConfig, PerformanceConfig,
-    NetworkConfig as AppNetworkConfig, StorageConfig, LoggingConfig, FeatureFlags
-};
     CircuitBreaker, CircuitState,
-
-// Configuration management exports
-pub use config_manager::{
-    ConfigManager, AppConfig,
-    GeneralConfig, ProxyConfig, PrivacyConfig, PerformanceConfig,
-    NetworkConfig as AppNetworkConfig, StorageConfig, LoggingConfig, FeatureFlags
-};
     MetricsCollector, HistogramStats, MetricsSnapshot,
-
-// Configuration management exports
-pub use config_manager::{
-    ConfigManager, AppConfig,
-    GeneralConfig, ProxyConfig, PrivacyConfig, PerformanceConfig,
-    NetworkConfig as AppNetworkConfig, StorageConfig, LoggingConfig, FeatureFlags
-};
     validators, string_utils
-
-// Configuration management exports
-pub use config_manager::{
-    ConfigManager, AppConfig,
-    GeneralConfig, ProxyConfig, PrivacyConfig, PerformanceConfig,
-    NetworkConfig as AppNetworkConfig, StorageConfig, LoggingConfig, FeatureFlags
-};
 };
 
-// Configuration management exports
-pub use config_manager::{
-    ConfigManager, AppConfig,
-    GeneralConfig, ProxyConfig, PrivacyConfig, PerformanceConfig,
-    NetworkConfig as AppNetworkConfig, StorageConfig, LoggingConfig, FeatureFlags
-};
 pub mod tab_manager;
 pub mod config_manager;
 
@@ -97,6 +49,13 @@ pub mod content_enhancement;
 
 // Database removed - using in-memory storage
 
+// Configuration management exports
+pub use config_manager::{
+    ConfigManager, AppConfig,
+    GeneralConfig, ProxyConfig, PrivacyConfig, PerformanceConfig,
+    NetworkConfig as AppNetworkConfig, StorageConfig, LoggingConfig, FeatureFlags
+};
+
 pub use tab_manager::TabIPManager;
 pub use tab_isolation::{TabProfile, NetworkConfig, TabStatus};
 pub use fingerprint::BrowserFingerprint;
@@ -106,7 +65,7 @@ pub use scraper_util::ProxyScraper;
 pub use security::{SecurityManager, BookmarkInput, ProxyInput};
 pub use webview_manager::{WebviewManager, WebviewTab};
 pub use browser_tab_manager::{BrowserTabManager, BrowserTab, CreateTabConfig, TabStats};
-pub use free_ip_providers::{FreeIpProvider, FreeIpProviderManager};
+pub use free_ip_providers::{FreeIpProvider, FreeIpProviderManager, ProxyFilter};
 pub use storage::{
     SessionManager, BrowserSession, SessionTab, SessionSettings, SessionProxyConfig,
     WindowState, ScrollPosition, TabHistoryEntry, SessionStatistics,
@@ -120,14 +79,27 @@ pub use storage::{
     ImportExportStats
 };
 pub use backup::{BackupManager, BackupData, BackupOptions, BackupInfo, AutoBackupSettings};
-pub use browser_controls::{BrowserController, BrowserState, BrowserSettings, WebRtcPolicy};
-pub use local_proxy::{LocalProxyServer, LocalProxyManager, ProxyConnection};
+pub use browser_controls::{
+    BrowserController, BrowserState, BrowserSettings, WebRtcPolicy, HistoryItem,
+    DownloadManager, DownloadItem, DownloadState,
+    ContextMenuManager, ContextMenuItem, ContextMenuItemType, ContextType, ContextInfo
+};
+pub use local_proxy::{
+    LocalProxyServer, LocalProxyManager, ProxyConnection,
+    WebSocketProxyHandler, WebSocketInterception,
+    NetworkInterceptor, InterceptedRequest, ModificationRule, RequestModifications
+};
 pub use pac_server::{PacServer, PacManager};
 pub use proxy_rotation::{
     ProxyRotationManager, ProxyRotationStrategy, ProxyMetrics, ProxySessionStats,
     SmartProxySelector, ProxyHealthMonitor, ProxyHealthStatus, BandwidthStats, GeoDiversityManager
 };
-pub use proxy_validator::{ProxyValidator, ProxyValidatorConfig, ValidationResult, ProxyHealthChecker};
+pub use proxy_validator::{
+    ProxyValidator, ProxyValidatorConfig, ValidationResult, ProxyHealthChecker,
+    ProxyQuarantineManager, QuarantinedProxy, QuarantineStats,
+    GeoVerifier, GeoVerificationConfig, GeoVerificationResult,
+    EnhancedProxyHealthChecker
+};
 pub use chromium_engine::{
     ChromiumEngine,
     ChromiumEngineConfig,

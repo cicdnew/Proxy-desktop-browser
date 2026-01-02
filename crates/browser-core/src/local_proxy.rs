@@ -421,3 +421,384 @@ impl LocalProxyManager {
         Ok(())
     }
 }
+
+// ============================================================================
+// WebSocket Proxy Support
+// ============================================================================
+
+use tokio_tungstenite::{WebSocketStream, MaybeTlsStream};
+use tokio_tungstenite::tungstenite::Message as WsMessage;
+use futures_util::{StreamExt, SinkExt};
+
+/// WebSocket proxy handler for proxying WebSocket connections
+pub struct WebSocketProxyHandler {
+    upstream_proxy: Option<ProxySettings>,
+}
+
+impl WebSocketProxyHandler {
+    pub fn new(upstream_proxy: Option<ProxySettings>) -> Self {
+        Self { upstream_proxy }
+    }
+
+    /// Handle a WebSocket upgrade request and proxy the connection
+    pub async fn handle_upgrade(
+        &self,
+        client_stream: TcpStream,
+        target_url: &str,
+    ) -> Result<()> {
+        info!("Handling WebSocket upgrade for: {}", target_url);
+
+        // Parse the target URL
+        let url = url::Url::parse(target_url)
+            .map_err(|e| anyhow!("Invalid WebSocket URL: {}", e))?;
+
+        // Connect to the target WebSocket server
+        let (ws_stream, _response) = if let Some(ref proxy) = self.upstream_proxy {
+            self.connect_through_proxy(&url, proxy).await?
+        } else {
+            self.connect_direct(&url).await?
+        };
+
+        // Accept the client WebSocket connection
+        let client_ws = tokio_tungstenite::accept_async(client_stream)
+            .await
+            .map_err(|e| anyhow!("Failed to accept WebSocket connection: {}", e))?;
+
+        // Proxy messages between client and target
+        self.proxy_websocket(client_ws, ws_stream).await
+    }
+
+    /// Connect directly to a WebSocket server
+    async fn connect_direct(
+        &self,
+        url: &url::Url,
+    ) -> Result<(WebSocketStream<MaybeTlsStream<TcpStream>>, tokio_tungstenite::tungstenite::http::Response<Option<Vec<u8>>>)> {
+        tokio_tungstenite::connect_async(url.as_str())
+            .await
+            .map_err(|e| anyhow!("Failed to connect to WebSocket server: {}", e))
+    }
+
+    /// Connect through a proxy to a WebSocket server
+    async fn connect_through_proxy(
+        &self,
+        url: &url::Url,
+        proxy: &ProxySettings,
+    ) -> Result<(WebSocketStream<MaybeTlsStream<TcpStream>>, tokio_tungstenite::tungstenite::http::Response<Option<Vec<u8>>>)> {
+        let proxy_host = proxy.host.as_ref()
+            .ok_or_else(|| anyhow!("Proxy host not configured"))?;
+        let proxy_port = proxy.port
+            .ok_or_else(|| anyhow!("Proxy port not configured"))?;
+
+        // First establish a CONNECT tunnel through the proxy
+        let proxy_addr = format!("{}:{}", proxy_host, proxy_port);
+        let proxy_stream = TcpStream::connect(&proxy_addr)
+            .await
+            .map_err(|e| anyhow!("Failed to connect to proxy: {}", e))?;
+
+        let target_host = url.host_str()
+            .ok_or_else(|| anyhow!("No host in WebSocket URL"))?;
+        let target_port = url.port().unwrap_or(if url.scheme() == "wss" { 443 } else { 80 });
+
+        // Send CONNECT request
+        let connect_request = self.build_connect_request(target_host, target_port, proxy);
+        let mut proxy_stream = proxy_stream;
+        proxy_stream.write_all(connect_request.as_bytes()).await?;
+
+        // Read CONNECT response
+        let mut response_buffer = vec![0u8; 1024];
+        let n = proxy_stream.read(&mut response_buffer).await?;
+        let response = String::from_utf8_lossy(&response_buffer[..n]);
+
+        if !response.contains("200") {
+            return Err(anyhow!("Proxy CONNECT failed: {}", response));
+        }
+
+        // Now upgrade the tunneled connection to WebSocket
+        let ws_stream = if url.scheme() == "wss" {
+            // TLS handshake needed
+            let connector = tokio_native_tls::TlsConnector::from(
+                native_tls::TlsConnector::new()
+                    .map_err(|e| anyhow!("TLS error: {}", e))?
+            );
+            let tls_stream = connector.connect(target_host, proxy_stream)
+                .await
+                .map_err(|e| anyhow!("TLS handshake failed: {}", e))?;
+            
+            tokio_tungstenite::client_async(url.as_str(), MaybeTlsStream::NativeTls(tls_stream))
+                .await
+                .map_err(|e| anyhow!("WebSocket handshake failed: {}", e))?
+        } else {
+            tokio_tungstenite::client_async(url.as_str(), MaybeTlsStream::Plain(proxy_stream))
+                .await
+                .map_err(|e| anyhow!("WebSocket handshake failed: {}", e))?
+        };
+
+        Ok(ws_stream)
+    }
+
+    /// Build a CONNECT request for the proxy
+    fn build_connect_request(&self, host: &str, port: u16, proxy: &ProxySettings) -> String {
+        let mut request = format!(
+            "CONNECT {}:{} HTTP/1.1\r\nHost: {}:{}\r\n",
+            host, port, host, port
+        );
+
+        // Add proxy authentication if configured
+        if let (Some(username), Some(password)) = (&proxy.username, &proxy.password) {
+            let credentials = format!("{}:{}", username, password);
+            let encoded = base64::engine::general_purpose::STANDARD.encode(credentials);
+            request.push_str(&format!("Proxy-Authorization: Basic {}\r\n", encoded));
+        }
+
+        request.push_str("\r\n");
+        request
+    }
+
+    /// Proxy WebSocket messages between client and target
+    async fn proxy_websocket<S1, S2>(
+        &self,
+        client: WebSocketStream<S1>,
+        target: WebSocketStream<S2>,
+    ) -> Result<()>
+    where
+        S1: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin,
+        S2: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin,
+    {
+        let (mut client_write, mut client_read) = client.split();
+        let (mut target_write, mut target_read) = target.split();
+
+        // Forward messages from client to target
+        let client_to_target = async {
+            while let Some(msg) = client_read.next().await {
+                match msg {
+                    Ok(msg) => {
+                        if msg.is_close() {
+                            break;
+                        }
+                        if target_write.send(msg).await.is_err() {
+                            break;
+                        }
+                    }
+                    Err(_) => break,
+                }
+            }
+        };
+
+        // Forward messages from target to client
+        let target_to_client = async {
+            while let Some(msg) = target_read.next().await {
+                match msg {
+                    Ok(msg) => {
+                        if msg.is_close() {
+                            break;
+                        }
+                        if client_write.send(msg).await.is_err() {
+                            break;
+                        }
+                    }
+                    Err(_) => break,
+                }
+            }
+        };
+
+        // Run both forwarding tasks concurrently
+        tokio::select! {
+            _ = client_to_target => {}
+            _ = target_to_client => {}
+        }
+
+        info!("WebSocket proxy connection closed");
+        Ok(())
+    }
+}
+
+/// WebSocket interception result
+#[derive(Debug, Clone)]
+pub struct WebSocketInterception {
+    pub url: String,
+    pub message_count: usize,
+    pub started_at: chrono::DateTime<chrono::Utc>,
+    pub ended_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+/// Network request interceptor for monitoring and modifying requests
+pub struct NetworkInterceptor {
+    /// Intercepted requests log
+    intercepted_requests: Arc<RwLock<Vec<InterceptedRequest>>>,
+    /// WebSocket connections
+    websocket_connections: Arc<RwLock<HashMap<String, WebSocketInterception>>>,
+    /// Request modification rules
+    modification_rules: Arc<RwLock<Vec<ModificationRule>>>,
+    /// Blocked URL patterns
+    blocked_patterns: Arc<RwLock<Vec<String>>>,
+}
+
+/// An intercepted HTTP request
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct InterceptedRequest {
+    pub id: String,
+    pub method: String,
+    pub url: String,
+    pub headers: HashMap<String, String>,
+    pub body: Option<Vec<u8>>,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub response_status: Option<u16>,
+    pub response_headers: Option<HashMap<String, String>>,
+    pub blocked: bool,
+    pub modified: bool,
+}
+
+/// A rule for modifying requests
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ModificationRule {
+    pub id: String,
+    pub name: String,
+    pub url_pattern: String,
+    pub enabled: bool,
+    pub modifications: RequestModifications,
+}
+
+/// Modifications to apply to a request
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct RequestModifications {
+    pub add_headers: HashMap<String, String>,
+    pub remove_headers: Vec<String>,
+    pub modify_headers: HashMap<String, String>,
+    pub redirect_url: Option<String>,
+}
+
+impl NetworkInterceptor {
+    pub fn new() -> Self {
+        Self {
+            intercepted_requests: Arc::new(RwLock::new(Vec::new())),
+            websocket_connections: Arc::new(RwLock::new(HashMap::new())),
+            modification_rules: Arc::new(RwLock::new(Vec::new())),
+            blocked_patterns: Arc::new(RwLock::new(Vec::new())),
+        }
+    }
+
+    /// Log an intercepted request
+    pub async fn log_request(&self, request: InterceptedRequest) {
+        let mut requests = self.intercepted_requests.write().await;
+        requests.push(request);
+        
+        // Keep only the last 1000 requests
+        if requests.len() > 1000 {
+            requests.remove(0);
+        }
+    }
+
+    /// Get all intercepted requests
+    pub async fn get_intercepted_requests(&self) -> Vec<InterceptedRequest> {
+        self.intercepted_requests.read().await.clone()
+    }
+
+    /// Clear intercepted requests
+    pub async fn clear_requests(&self) {
+        self.intercepted_requests.write().await.clear();
+    }
+
+    /// Add a modification rule
+    pub async fn add_rule(&self, rule: ModificationRule) {
+        self.modification_rules.write().await.push(rule);
+    }
+
+    /// Remove a modification rule
+    pub async fn remove_rule(&self, rule_id: &str) {
+        let mut rules = self.modification_rules.write().await;
+        rules.retain(|r| r.id != rule_id);
+    }
+
+    /// Get all modification rules
+    pub async fn get_rules(&self) -> Vec<ModificationRule> {
+        self.modification_rules.read().await.clone()
+    }
+
+    /// Add a blocked URL pattern
+    pub async fn block_pattern(&self, pattern: String) {
+        self.blocked_patterns.write().await.push(pattern);
+    }
+
+    /// Check if a URL should be blocked
+    pub async fn should_block(&self, url: &str) -> bool {
+        let patterns = self.blocked_patterns.read().await;
+        for pattern in patterns.iter() {
+            if url.contains(pattern) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Apply modification rules to a request
+    pub async fn apply_modifications(&self, mut request: InterceptedRequest) -> InterceptedRequest {
+        let rules = self.modification_rules.read().await;
+        
+        for rule in rules.iter() {
+            if !rule.enabled {
+                continue;
+            }
+            
+            if request.url.contains(&rule.url_pattern) {
+                // Add headers
+                for (key, value) in &rule.modifications.add_headers {
+                    request.headers.insert(key.clone(), value.clone());
+                }
+                
+                // Remove headers
+                for key in &rule.modifications.remove_headers {
+                    request.headers.remove(key);
+                }
+                
+                // Modify headers
+                for (key, value) in &rule.modifications.modify_headers {
+                    if request.headers.contains_key(key) {
+                        request.headers.insert(key.clone(), value.clone());
+                    }
+                }
+                
+                request.modified = true;
+            }
+        }
+        
+        request
+    }
+
+    /// Register a WebSocket connection
+    pub async fn register_websocket(&self, id: String, url: String) {
+        let mut connections = self.websocket_connections.write().await;
+        connections.insert(id, WebSocketInterception {
+            url,
+            message_count: 0,
+            started_at: chrono::Utc::now(),
+            ended_at: None,
+        });
+    }
+
+    /// Update WebSocket message count
+    pub async fn increment_websocket_count(&self, id: &str) {
+        let mut connections = self.websocket_connections.write().await;
+        if let Some(conn) = connections.get_mut(id) {
+            conn.message_count += 1;
+        }
+    }
+
+    /// Close a WebSocket connection
+    pub async fn close_websocket(&self, id: &str) {
+        let mut connections = self.websocket_connections.write().await;
+        if let Some(conn) = connections.get_mut(id) {
+            conn.ended_at = Some(chrono::Utc::now());
+        }
+    }
+
+    /// Get all WebSocket connections
+    pub async fn get_websocket_connections(&self) -> HashMap<String, WebSocketInterception> {
+        self.websocket_connections.read().await.clone()
+    }
+}
+
+impl Default for NetworkInterceptor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
