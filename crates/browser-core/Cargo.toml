@@ -1,4 +1,5 @@
 [package]
+description = "Core browser functionality with proxy support and privacy features"
 name = "browser-core"
 version = "1.0.0"
 edition = "2021"
@@ -62,6 +63,12 @@ mime = "0.3"
 regex = "1.10"
 sha2 = "0.10"
 hex = "0.4"
+
+# WebSocket Proxy Support
+tokio-tungstenite = "0.21"
+futures-util = "0.3"
+native-tls = "0.2"
+tokio-native-tls = "0.3"
 
 # Chromium Engine Integration
 chromiumoxide = { workspace = true }

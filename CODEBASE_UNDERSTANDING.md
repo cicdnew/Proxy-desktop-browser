@@ -192,6 +192,22 @@ This document covers:
 - Data flow diagrams
 - API reference and best practices
 
+---
+
+## Coding Efficiency Guide
+
+For developer productivity tips, code quality standards, and best practices, see [CODING_EFFICIENCY.md](./CODING_EFFICIENCY.md).
+
+This document covers:
+- Quick start commands and IDE setup
+- Code organization patterns
+- Utility functions and common imports
+- Code quality checklist
+- Testing best practices
+- Common design patterns
+- Performance optimization tips
+- Debugging guidelines
+
 ## License
 
 MIT OR Apache-2.0

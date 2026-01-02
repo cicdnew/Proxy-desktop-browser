@@ -251,3 +251,13 @@ export type ProxyProviderStatus = {
   bandwidth_limit?: number;
   error?: string;
 };
+
+// Proxy session statistics
+export interface ProxySessionStats {
+  tab_id: string;
+  current_proxy_ip: string;
+  proxy_country: string;
+  assigned_at: string;
+  request_count: number;
+  duration_seconds: number;
+}

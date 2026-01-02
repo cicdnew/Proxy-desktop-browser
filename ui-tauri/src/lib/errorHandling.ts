@@ -27,7 +27,7 @@ export interface ErrorContext {
   timestamp: number;
   attempt: number;
   error: Error;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 class AdvancedErrorHandler {

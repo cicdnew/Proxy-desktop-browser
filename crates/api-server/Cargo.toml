@@ -1,4 +1,5 @@
 [package]
+description = "REST API server for Proxy Desktop Browser"
 name = "api-server"
 version = "1.0.0"
 edition = "2021"
