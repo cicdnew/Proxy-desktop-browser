@@ -899,6 +899,51 @@ fn build_ip_generator() -> IPGenerator {
     }
 }
 
+/// Initialize storage engine with fallback to temp directory
+fn init_storage_engine(app_data_dir: &std::path::Path) -> Arc<StorageEngine> {
+    let storage_dir = app_data_dir.join("data");
+    match StorageEngine::new(&storage_dir) {
+        Ok(engine) => Arc::new(engine),
+        Err(e) => {
+            warn!("Failed to initialize storage engine: {}. Using temp directory.", e);
+            let temp_dir = std::env::temp_dir().join("virtual-ip-browser/data");
+            Arc::new(StorageEngine::new(&temp_dir).expect("Failed to create storage engine"))
+        }
+    }
+}
+
+/// Initialize backup manager with fallback to temp directory
+fn init_backup_manager(app_data_dir: &std::path::Path) -> Arc<BackupManager> {
+    let backup_dir = app_data_dir.join("backups");
+    match BackupManager::new(&backup_dir) {
+        Ok(manager) => Arc::new(manager),
+        Err(e) => {
+            warn!("Failed to initialize backup manager: {}. Using temp directory.", e);
+            let temp_dir = std::env::temp_dir().join("virtual-ip-browser/backups");
+            Arc::new(BackupManager::new(&temp_dir).expect("Failed to create backup manager"))
+        }
+    }
+}
+
+/// Spawn async task to fetch proxies on startup
+fn spawn_proxy_fetch_task(proxy_manager: Arc<ProxyManager>) {
+    tauri::async_runtime::spawn(async move {
+        info!("Fetching free proxies on startup...");
+        match proxy_manager.fetch_proxies().await {
+            Ok(count) => info!("Successfully fetched {} proxies", count),
+            Err(e) => error!("Failed to fetch free proxies on startup: {}", e),
+        }
+    });
+}
+
+/// Get app data directory with fallback to temp directory
+fn get_app_data_dir(app: &tauri::App) -> std::path::PathBuf {
+    let app_data_dir = app.path().app_data_dir()
+        .unwrap_or_else(|_| std::env::temp_dir().join("virtual-ip-browser"));
+    std::fs::create_dir_all(&app_data_dir).ok();
+    app_data_dir
+}
+
 fn main() {
     let ip_generator = Arc::new(build_ip_generator());
     let proxy_manager = Arc::new(ProxyManager::new());
@@ -914,42 +959,13 @@ fn main() {
             let webview_manager = WebviewManager::new(app.handle().clone());
             app.manage(webview_manager);
             
-            // Get app data directory using Tauri v2 API
-            let app_data_dir = app.path().app_data_dir()
-                .unwrap_or_else(|_| std::env::temp_dir().join("virtual-ip-browser"));
-            std::fs::create_dir_all(&app_data_dir).ok();
-            
-            // Initialize storage engine
-            let storage_dir = app_data_dir.join("data");
-            let storage_engine = match StorageEngine::new(&storage_dir) {
-                Ok(engine) => Arc::new(engine),
-                Err(e) => {
-                    warn!(" Failed to initialize storage engine: {}. Using temp directory.", e);
-                    let temp_dir = std::env::temp_dir().join("virtual-ip-browser/data");
-                    Arc::new(StorageEngine::new(&temp_dir).expect("Failed to create storage engine"))
-                }
-            };
-            
-            // Initialize backup manager
-            let backup_dir = app_data_dir.join("backups");
-            let backup_manager = match BackupManager::new(&backup_dir) {
-                Ok(manager) => Arc::new(manager),
-                Err(e) => {
-                    warn!(" Failed to initialize backup manager: {}. Using temp directory.", e);
-                    let temp_dir = std::env::temp_dir().join("virtual-ip-browser/backups");
-                    Arc::new(BackupManager::new(&temp_dir).expect("Failed to create backup manager"))
-                }
-            };
+            // Get app data directory and initialize components
+            let app_data_dir = get_app_data_dir(app);
+            let storage_engine = init_storage_engine(&app_data_dir);
+            let backup_manager = init_backup_manager(&app_data_dir);
             
             // Fetch free proxies on startup
-            let proxy_manager_clone = proxy_manager.clone();
-            tauri::async_runtime::spawn(async move {
-                info!("Fetching free proxies on startup...");
-                match proxy_manager_clone.fetch_proxies().await {
-                    Ok(count) => info!("Successfully fetched {} proxies", count),
-                    Err(e) => error!("Failed to fetch free proxies on startup: {}", e),
-                }
-            });
+            spawn_proxy_fetch_task(proxy_manager.clone());
             
             // Manage the app state
             app.manage(AppState {

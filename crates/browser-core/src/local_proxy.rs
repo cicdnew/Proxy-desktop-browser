@@ -73,6 +73,17 @@ async fn connect_to_proxy(proxy: &ProxySettings) -> Result<TcpStream> {
         .map_err(|e| anyhow!("Failed to connect to proxy {} - {}", proxy_addr, e))
 }
 
+/// Establish a CONNECT tunnel through a proxy to a target host
+async fn establish_tunnel_to_target(
+    proxy: &ProxySettings,
+    target_host: &str,
+    target_port: u16,
+) -> Result<TcpStream> {
+    let mut proxy_stream = connect_to_proxy(proxy).await?;
+    send_connect_request(&mut proxy_stream, target_host, target_port, proxy).await?;
+    Ok(proxy_stream)
+}
+
 /// Forward data from reader to writer until EOF or error
 async fn forward_data<R, W>(mut reader: R, mut writer: W)
 where
@@ -315,12 +326,7 @@ impl LocalProxyServer {
         target_host: &str,
         target_port: u16,
     ) -> Result<TcpStream> {
-        let mut proxy_stream = connect_to_proxy(proxy).await?;
-
-        // Send CONNECT request and verify response
-        send_connect_request(&mut proxy_stream, target_host, target_port, proxy).await?;
-
-        Ok(proxy_stream)
+        establish_tunnel_to_target(proxy, target_host, target_port).await
     }
 
     /// Get active connections
@@ -528,8 +534,6 @@ impl WebSocketProxyHandler {
         url: &url::Url,
         proxy: &ProxySettings,
     ) -> Result<TcpStream> {
-        let mut proxy_stream = connect_to_proxy(proxy).await?;
-
         let target_host = url
             .host_str()
             .ok_or_else(|| anyhow!("No host in WebSocket URL"))?;
@@ -537,10 +541,7 @@ impl WebSocketProxyHandler {
             .port()
             .unwrap_or(if url.scheme() == "wss" { 443 } else { 80 });
 
-        // Send CONNECT request and verify response
-        send_connect_request(&mut proxy_stream, target_host, target_port, proxy).await?;
-
-        Ok(proxy_stream)
+        establish_tunnel_to_target(proxy, target_host, target_port).await
     }
 
     /// Perform TLS handshake on a stream
