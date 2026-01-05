@@ -1,3 +1,11 @@
+//! Proxy Module
+//!
+//! Provides proxy configuration and management including:
+//! - Proxy settings (HTTP, HTTPS, SOCKS4, SOCKS5)
+//! - Free proxy management and rotation
+//! - Proxy URL generation and validation
+//! - Proxy fetching from public sources
+
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -47,7 +55,10 @@ impl Default for ProxySettings {
 }
 
 impl ProxySettings {
-    /// Converts to url.
+    /// Convert proxy settings to a URL string
+    ///
+    /// Returns None for direct connections, otherwise returns the full proxy URL
+    /// including authentication if configured.
     pub fn to_url(&self) -> Option<String> {
         if self.proxy_type == ProxyType::Direct {
             return None;
@@ -74,6 +85,7 @@ impl ProxySettings {
     }
 
     /// Checks if configured.
+    /// Check if a proxy is configured (not direct connection)
     pub fn is_configured(&self) -> bool {
         self.proxy_type != ProxyType::Direct && self.host.is_some() && self.port.is_some()
     }
@@ -138,21 +150,31 @@ impl ProxyManager {
     }
 
     /// Gets the settings.
+    /// Get the current proxy settings
     pub async fn get_settings(&self) -> ProxySettings {
         self.settings.read().await.clone()
     }
 
     /// Sets the settings.
+    /// Set new proxy settings
+    ///
+    /// # Arguments
+    /// * `settings` - The new proxy settings to apply
     pub async fn set_settings(&self, settings: ProxySettings) {
         *self.settings.write().await = settings;
     }
 
     /// Gets the free proxies.
+    /// Get the list of available free proxies
     pub async fn get_free_proxies(&self) -> Vec<FreeProxy> {
         self.free_proxies.read().await.clone()
     }
 
     /// Adds a free proxies.
+    /// Add free proxies to the available pool
+    ///
+    /// # Arguments
+    /// * `proxies` - The proxies to add
     pub async fn add_free_proxies(&self, proxies: Vec<FreeProxy>) {
         let mut list = self.free_proxies.write().await;
         for proxy in proxies {
@@ -163,27 +185,37 @@ impl ProxyManager {
     }
 
     /// Sets the active proxy.
+    /// Set the currently active proxy
+    ///
+    /// # Arguments
+    /// * `proxy` - The proxy to set as active, or None for direct connection
     pub async fn set_active_proxy(&self, proxy: Option<FreeProxy>) {
         *self.active_proxy.write().await = proxy;
     }
 
     /// Gets the active proxy.
+    /// Get the currently active proxy
     pub async fn get_active_proxy(&self) -> Option<FreeProxy> {
         self.active_proxy.read().await.clone()
     }
 
     /// Removes the dead proxies.
+    /// Remove proxies that have been marked as dead
     pub async fn remove_dead_proxies(&self) {
         let mut list = self.free_proxies.write().await;
         list.retain(|p| p.is_working);
     }
 
     /// Clears proxies.
+    /// Clear all free proxies from the pool
     pub async fn clear_proxies(&self) {
         self.free_proxies.write().await.clear();
     }
 
     /// Gets the effective proxy url.
+    /// Get the effective proxy URL based on current settings
+    ///
+    /// Returns the active free proxy URL if set, otherwise the configured proxy URL.
     pub async fn get_effective_proxy_url(&self) -> Option<String> {
         // First check if there's an active free proxy
         if let Some(active) = self.active_proxy.read().await.as_ref() {
@@ -194,6 +226,9 @@ impl ProxyManager {
     }
 
     /// Fetches proxies.
+    /// Fetch free proxies from public sources
+    ///
+    /// Returns the number of proxies fetched.
     pub async fn fetch_proxies(&self) -> Result<usize, Box<dyn std::error::Error>> {
         // Try to fetch from provider first
         match crate::FreeIpProviderManager::new() {

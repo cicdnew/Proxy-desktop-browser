@@ -34,7 +34,7 @@ pub struct MultiEngineSystem {
 }
 
 impl MultiEngineSystem {
-    /// Creates a new new.
+    /// Create a new MultiEngineSystem with default settings
     pub fn new() -> Self {
         let mut scores = HashMap::new();
         scores.insert(EngineType::Chromium, 1.0);
@@ -50,6 +50,11 @@ impl MultiEngineSystem {
     }
 
     /// Select optimal engine based on content type
+    /// Select the optimal rendering engine based on URL and content type
+    ///
+    /// # Arguments
+    /// * `url` - The URL to render
+    /// * `content_type` - The content type of the page
     pub fn select_optimal_engine(&self, url: &str, content_type: &str) -> EngineType {
         // AI-based engine selection for optimal rendering
         if content_type.contains("video") || url.contains("youtube") {
@@ -62,6 +67,10 @@ impl MultiEngineSystem {
     }
 
     /// Hot swap between engines without page reload
+    /// Hot-swap to a different rendering engine
+    ///
+    /// # Arguments
+    /// * `to` - The target engine type
     pub fn hot_swap_engine(&mut self, to: EngineType) -> Result<()> {
         if self.hot_swap_enabled {
             info!("Hot swapping engine from {:?} to {:?}", self.active_engine, to);
@@ -138,12 +147,21 @@ impl WasiBrowser {
     }
 
     /// Loads the module.
+    /// Load a WASM extension module
+    ///
+    /// # Arguments
+    /// * `name` - The module name
+    /// * `wasm` - The WASM bytecode
     pub fn load_module(&mut self, name: &str, wasm: Vec<u8>) {
         self.wasm_modules.insert(name.to_string(), wasm);
         info!("Loaded WASM module: {}", name);
     }
 
     /// Sets the capabilities.
+    /// Set WASI capabilities for loaded modules
+    ///
+    /// # Arguments
+    /// * `caps` - The capabilities to grant
     pub fn set_capabilities(&mut self, caps: WasiCapabilities) {
         self.capabilities = caps;
     }
@@ -188,17 +206,29 @@ impl MeshProxyNetwork {
     }
 
     /// Performs join network operation.
+    /// Join a mesh network
+    ///
+    /// # Arguments
+    /// * `node` - The local node configuration
     pub fn join_network(&mut self, node: MeshNode) {
         info!("Joining mesh network as node: {}", node.node_id);
         self.local_node = Some(node);
     }
 
     /// Adds a peer.
+    /// Add a peer to the mesh network
+    ///
+    /// # Arguments
+    /// * `peer` - The peer node to add
     pub fn add_peer(&mut self, peer: MeshNode) {
         self.peers.push(peer);
     }
 
     /// Calculates optimal route.
+    /// Calculate the optimal route to a destination
+    ///
+    /// # Arguments
+    /// * `destination` - The target destination
     pub fn calculate_optimal_route(&self, destination: &str) -> Vec<String> {
         // Multi-hop routing algorithm
         self.routing_table.get(destination).cloned().unwrap_or_default()
@@ -229,12 +259,14 @@ impl OnionRouter {
     }
 
     /// Performs enable operation.
+    /// Enable onion routing
     pub fn enable(&mut self) {
         self.enabled = true;
         info!("Onion routing enabled with {} hops", self.circuit_hops);
     }
 
     /// Builds the circuit.
+    /// Build a new onion routing circuit
     pub fn build_circuit(&mut self) -> Result<u32> {
         if !self.enabled {
             return Err(anyhow::anyhow!("Onion routing not enabled"));
@@ -288,11 +320,16 @@ impl DnsResolver {
     }
 
     /// Gets the strategy.
+    /// Get the current DNS strategy
     pub fn get_strategy(&self) -> DnsStrategy {
         self.strategy
     }
 
     /// Sets the strategy.
+    /// Set the DNS resolution strategy
+    ///
+    /// # Arguments
+    /// * `strategy` - The new strategy to use
     pub fn set_strategy(&mut self, strategy: DnsStrategy) {
         self.strategy = strategy;
         info!("DNS strategy set to {:?}", strategy);
@@ -325,6 +362,7 @@ impl ZkAuthSystem {
     }
 
     /// Performs enable operation.
+    /// Enable onion routing
     pub fn enable(&mut self) {
         self.enabled = true;
         info!("Zero-knowledge authentication enabled");
@@ -935,6 +973,7 @@ impl IpfsBrowser {
     }
 
     /// Performs enable operation.
+    /// Enable onion routing
     pub fn enable(&mut self) {
         self.enabled = true;
         info!("IPFS browser integration enabled");

@@ -1,3 +1,12 @@
+//! Storage Module
+//!
+//! Provides persistent storage for browser data including:
+//! - Cookies management
+//! - Browsing history
+//! - Bookmarks
+//! - Import/Export functionality with JSON support
+//! - Data migration and backup integration
+
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -80,6 +89,7 @@ impl ImportOptions {
     }
 
     /// Create options to replace all data
+    /// Create import options that replace all existing data
     pub fn replace_all() -> Self {
         Self {
             merge: false,
@@ -162,11 +172,16 @@ impl StorageEngine {
     // =========================================================================
 
     /// Export all storage data to a StorageExport struct
+    /// Export all storage data
     pub async fn export_all(&self) -> Result<StorageExport> {
         self.export_with_options(&ExportOptions::all()).await
     }
 
     /// Export storage data with specific options
+    /// Export storage data with specified options
+    ///
+    /// # Arguments
+    /// * `options` - Export options specifying what to export
     pub async fn export_with_options(&self, options: &ExportOptions) -> Result<StorageExport> {
         let now = chrono::Utc::now().timestamp();
         
@@ -214,6 +229,10 @@ impl StorageEngine {
     }
 
     /// Export storage data to a JSON file
+    /// Export all data to a file
+    ///
+    /// # Arguments
+    /// * `path` - Path to the export file
     pub async fn export_to_file(&self, path: &Path) -> Result<ImportExportStats> {
         self.export_to_file_with_options(path, &ExportOptions::all()).await
     }
@@ -246,6 +265,7 @@ impl StorageEngine {
     }
 
     /// Export storage data to a JSON string
+    /// Export all data to a JSON string
     pub async fn export_to_json(&self) -> Result<String> {
         let export = self.export_all().await?;
         serde_json::to_string_pretty(&export).context("Failed to serialize storage data")
@@ -256,6 +276,10 @@ impl StorageEngine {
     // =========================================================================
 
     /// Import all storage data from a StorageExport struct
+    /// Import all data from a StorageExport
+    ///
+    /// # Arguments
+    /// * `data` - The data to import
     pub async fn import_all(&self, data: StorageExport) -> Result<ImportExportStats> {
         self.import_with_options(data, &ImportOptions::all()).await
     }
@@ -406,6 +430,10 @@ impl StorageEngine {
     }
 
     /// Import storage data from a JSON file
+    /// Import data from a file
+    ///
+    /// # Arguments
+    /// * `path` - Path to the import file
     pub async fn import_from_file(&self, path: &Path) -> Result<ImportExportStats> {
         self.import_from_file_with_options(path, &ImportOptions::all()).await
     }
@@ -432,6 +460,10 @@ impl StorageEngine {
     }
 
     /// Import storage data from a JSON string
+    /// Import data from a JSON string
+    ///
+    /// # Arguments
+    /// * `json` - The JSON string to import from
     pub async fn import_from_json(&self, json: &str) -> Result<ImportExportStats> {
         let data: StorageExport = serde_json::from_str(json)
             .context("Failed to parse JSON data")?;
@@ -552,6 +584,10 @@ impl StorageEngine {
     // =========================================================================
 
     /// Sets the cookie.
+    /// Set a cookie in storage
+    ///
+    /// # Arguments
+    /// * `cookie` - The cookie to store
     pub async fn set_cookie(&self, cookie: Cookie) -> Result<()> {
         let key = format!("{}|{}|{}", cookie.domain, cookie.name, cookie.path);
         self.cookies.write().await.insert(key, cookie);
@@ -559,6 +595,10 @@ impl StorageEngine {
     }
 
     /// Gets the cookies.
+    /// Get cookies for a domain
+    ///
+    /// # Arguments
+    /// * `domain` - The domain to get cookies for
     pub async fn get_cookies(&self, domain: &str) -> Result<Vec<Cookie>> {
         let cookies = self.cookies.read().await;
         let result: Vec<Cookie> = cookies

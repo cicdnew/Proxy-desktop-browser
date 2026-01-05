@@ -113,6 +113,10 @@ impl ReaderMode {
     }
 
     /// Configures with config.
+    /// Create a new ReaderMode instance with custom configuration
+    ///
+    /// # Arguments
+    /// * `config` - The reader mode configuration to use
     pub fn with_config(config: ReaderModeConfig) -> Self {
         Self {
             config,
@@ -121,6 +125,12 @@ impl ReaderMode {
     }
 
     /// Extract article content from HTML
+    /// Extract article content from HTML
+    ///
+    /// # Arguments
+    /// * `url` - The URL of the page
+    /// * `html` - The HTML content to extract from
+    /// * `title` - Optional title override
     pub fn extract_article(&mut self, url: &str, html: &str, title: Option<&str>) -> ExtractedArticle {
         // Simple content extraction (in production would use readability algorithm)
         let text_content = self.strip_html(html);
@@ -249,6 +259,7 @@ impl ReaderMode {
     }
 
     /// Generate reader mode CSS
+    /// Generate CSS styles for reader mode based on current configuration
     pub fn generate_css(&self) -> String {
         let (bg_color, text_color) = match self.config.theme {
             ReaderTheme::Light => ("#ffffff", "#1a1a1a"),
@@ -308,16 +319,25 @@ impl ReaderMode {
     }
 
     /// Update configuration
+    /// Update the reader mode configuration
+    ///
+    /// # Arguments
+    /// * `config` - The new configuration to use
     pub fn set_config(&mut self, config: ReaderModeConfig) {
         self.config = config;
     }
 
     /// Get current configuration
+    /// Get the current reader mode configuration
     pub fn get_config(&self) -> &ReaderModeConfig {
         &self.config
     }
 
     /// Get cached article
+    /// Get a cached extracted article by URL
+    ///
+    /// # Arguments
+    /// * `url` - The URL to look up
     pub fn get_cached(&self, url: &str) -> Option<&ExtractedArticle> {
         self.extracted_content.get(url)
     }
@@ -435,6 +455,10 @@ impl MediaPlayer {
     }
 
     /// Set current media
+    /// Set the current media to play
+    ///
+    /// # Arguments
+    /// * `media` - The media information
     pub fn set_media(&mut self, media: MediaInfo) {
         if let Some(current) = self.current_media.take() {
             self.history.push(current);
@@ -443,21 +467,28 @@ impl MediaPlayer {
     }
 
     /// Add to playlist
+    /// Add media to the playlist
+    ///
+    /// # Arguments
+    /// * `media` - The media to add
     pub fn add_to_playlist(&mut self, media: MediaInfo) {
         self.playlist.push(media);
     }
 
     /// Get current media
+    /// Get the currently playing media
     pub fn get_current(&self) -> Option<&MediaInfo> {
         self.current_media.as_ref()
     }
 
     /// Get playlist
+    /// Get the current playlist
     pub fn get_playlist(&self) -> &[MediaInfo] {
         &self.playlist
     }
 
     /// Play next in playlist
+    /// Move to the next item in the playlist
     pub fn next(&mut self) -> Option<&MediaInfo> {
         if !self.playlist.is_empty() {
             if let Some(current) = self.current_media.take() {
@@ -469,6 +500,7 @@ impl MediaPlayer {
     }
 
     /// Play previous from history
+    /// Move to the previous item in the playlist
     pub fn previous(&mut self) -> Option<&MediaInfo> {
         if let Some(prev) = self.history.pop() {
             if let Some(current) = self.current_media.take() {
@@ -480,6 +512,7 @@ impl MediaPlayer {
     }
 
     /// Generate enhanced player JavaScript
+    /// Generate JavaScript for the media player UI
     pub fn generate_player_script(&self) -> String {
         format!(
             r#"
@@ -610,16 +643,22 @@ impl ContentTransformer {
     }
 
     /// Add a transformation
+    /// Add a transformation to be applied
+    ///
+    /// # Arguments
+    /// * `transform` - The transformation type to add
     pub fn add_transformation(&mut self, transform: TransformationType) {
         self.transformations.push(transform);
     }
 
     /// Remove all transformations
+    /// Clear all pending transformations
     pub fn clear_transformations(&mut self) {
         self.transformations.clear();
     }
 
     /// Generate transformation CSS
+    /// Generate CSS styles for reader mode based on current configuration
     pub fn generate_css(&self) -> String {
         let mut css = String::new();
         
@@ -755,6 +794,7 @@ impl AccessibilityManager {
     }
 
     /// Generate accessibility CSS
+    /// Generate CSS styles for reader mode based on current configuration
     pub fn generate_css(&self) -> String {
         let mut css = String::new();
         
@@ -808,12 +848,17 @@ impl AccessibilityManager {
     }
 
     /// Announce message for screen readers
+    /// Add a screen reader announcement
+    ///
+    /// # Arguments
+    /// * `message` - The message to announce
     pub fn announce(&mut self, message: &str) {
         self.announcements.push(message.to_string());
         info!("Accessibility announcement: {}", message);
     }
 
     /// Get pending announcements
+    /// Get and clear pending announcements
     pub fn get_announcements(&mut self) -> Vec<String> {
         std::mem::take(&mut self.announcements)
     }
@@ -862,11 +907,13 @@ impl ContentEnhancementManager {
     }
 
     /// Get uptime
+    /// Get the uptime in seconds since the manager was created
     pub fn uptime_seconds(&self) -> u64 {
         self.start_time.elapsed().as_secs()
     }
 
     /// Get combined CSS for all enhancements
+    /// Get combined CSS from all enhancement modules
     pub fn get_combined_css(&self) -> String {
         let mut css = String::new();
         css.push_str(&self.transformer.generate_css());
@@ -875,6 +922,7 @@ impl ContentEnhancementManager {
     }
 
     /// Get combined JavaScript
+    /// Get combined JavaScript from all enhancement modules
     pub fn get_combined_js(&self) -> String {
         self.media_player.generate_player_script()
     }
@@ -1194,6 +1242,10 @@ impl AdvancedLanguageDetector {
     }
 
     /// Detect the script type from text
+    /// Detect the script type of text
+    ///
+    /// # Arguments
+    /// * `text` - The text to analyze
     pub fn detect_script(&self, text: &str) -> ScriptType {
         let mut latin_count = 0;
         let mut cyrillic_count = 0;
@@ -1235,6 +1287,10 @@ impl AdvancedLanguageDetector {
     }
 
     /// Detect language with confidence score
+    /// Detect the language of text
+    ///
+    /// # Arguments
+    /// * `text` - The text to analyze
     pub fn detect(&self, text: &str) -> LanguageDetectionResult {
         if text.len() < self.min_text_length {
             return LanguageDetectionResult {
@@ -1419,6 +1475,10 @@ impl TextAnalyzer {
     }
 
     /// Get readability level description
+    /// Get the readability level for a given score
+    ///
+    /// # Arguments
+    /// * `score` - The readability score
     pub fn readability_level(score: f64) -> &'static str {
         match score as i32 {
             90..=100 => "Very Easy (5th grade)",
@@ -1432,6 +1492,11 @@ impl TextAnalyzer {
     }
 
     /// Extract keywords from text (simple TF-based extraction)
+    /// Extract keywords from text
+    ///
+    /// # Arguments
+    /// * `text` - The text to extract keywords from
+    /// * `max_keywords` - Maximum number of keywords to return
     pub fn extract_keywords(text: &str, max_keywords: usize) -> Vec<(String, usize)> {
         let stop_words: std::collections::HashSet<&str> = [
             "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
