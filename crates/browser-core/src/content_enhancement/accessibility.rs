@@ -3,6 +3,7 @@
 //! Provides accessibility enhancements.
 
 use serde::{Deserialize, Serialize};
+use tracing::info;
 
 pub struct AccessibilityManager {
     config: AccessibilityConfig,
@@ -166,8 +167,3 @@ impl Default for AccessibilityManager {
     }
 }
 
-// =============================================================================
-// Unified Content Enhancement Manager
-// =============================================================================
-
-/// Unified content enhancement manager

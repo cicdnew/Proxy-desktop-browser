@@ -343,7 +343,7 @@ impl AdvancedLanguageDetector {
     fn calculate_language_score(&self, words: &[&str], profile: &LanguageProfile) -> f64 {
         let total_words = words.len() as f64;
         let mut weighted_matches = 0.0;
-        let mut total_weight = 0.0;
+        let mut total_weight: f64 = 0.0;
 
         for word in words {
             if let Some(weight) = profile.common_words.get(*word) {
@@ -385,8 +385,3 @@ impl Default for AdvancedLanguageDetector {
     }
 }
 
-// =============================================================================
-// Text Analysis Utilities
-// =============================================================================
-
-/// Text statistics analyzer

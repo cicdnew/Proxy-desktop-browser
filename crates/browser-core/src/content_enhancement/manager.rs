@@ -4,6 +4,7 @@
 
 use std::time::Instant;
 use super::{ReaderMode, MediaPlayer, ContentTransformer, AccessibilityManager};
+use tracing::info;
 
 pub struct ContentEnhancementManager {
     pub reader_mode: ReaderMode,
@@ -126,8 +127,3 @@ mod tests {
     }
 }
 
-// =============================================================================
-// Enhanced Language Detection System
-// =============================================================================
-
-/// Advanced language detector with multiple detection strategies

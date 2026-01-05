@@ -308,7 +308,7 @@ async fn restore_backup(state: State<'_, AppState>, path: String, password: Opti
     // Restore cookies
     if let Some(cookies) = backup_data.cookies {
         for cookie in cookies {
-            state.storage_engine.set_cookie(&cookie).await.map_err(|e| e.to_string())?;
+            state.storage_engine.set_cookie(cookie.clone()).await.map_err(|e| e.to_string())?;
         }
     }
 

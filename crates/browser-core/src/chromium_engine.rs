@@ -670,7 +670,7 @@ impl ChromiumEngine {
         let (download, upload, latency) = self.config.network_condition.get_params();
         
         // Skip if no throttling configured (values are 0 or max)
-        if download == 0 && upload == 0 && latency == 0 {
+        if download == 0.0 && upload == 0.0 && latency == 0.0 {
             debug!("Network throttling: no throttling configured, skipping");
             return Ok(());
         }
@@ -682,13 +682,13 @@ impl ChromiumEngine {
         
         // Convert kbps to bytes per second for CDP
         // CDP expects bytes per second, -1 means no limit
-        let download_throughput = if download > 0 {
+        let download_throughput = if download > 0.0 {
             (download as f64 * 1024.0) / 8.0 // kbps to bytes/s
         } else {
             -1.0 // No limit
         };
         
-        let upload_throughput = if upload > 0 {
+        let upload_throughput = if upload > 0.0 {
             (upload as f64 * 1024.0) / 8.0 // kbps to bytes/s
         } else {
             -1.0 // No limit

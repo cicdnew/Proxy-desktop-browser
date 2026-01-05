@@ -7,6 +7,7 @@
 //! - Validation and defaults
 
 use anyhow::{Context, Result};
+use toml;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

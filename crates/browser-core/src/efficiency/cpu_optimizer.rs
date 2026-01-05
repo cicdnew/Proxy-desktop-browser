@@ -85,7 +85,7 @@ impl ParallelProcessor {
     pub fn thread_count(&self) -> usize { self.thread_count }
 
     pub fn process_parallel<T, F, R>(&self, items: Vec<T>, processor: F) -> Vec<R>
-    where T: Send + 'static, R: Send + 'static, F: Fn(T) -> R + Send + Sync + Clone + 'static {
+    where T: Send + Clone + 'static, R: Send + 'static, F: Fn(T) -> R + Send + Sync + Clone + 'static {
         let chunk_size = (items.len() / self.thread_count).max(1);
         let chunks: Vec<Vec<T>> = items.into_iter().collect::<Vec<_>>().chunks(chunk_size).map(|c| c.to_vec()).collect();
         let handles: Vec<_> = chunks.into_iter().map(|chunk| {

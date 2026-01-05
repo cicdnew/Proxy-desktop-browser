@@ -63,7 +63,7 @@ pub use config_manager::{
 };
 
 pub use tab_manager::TabIPManager;
-pub use tab_isolation::{TabProfile, NetworkConfig, TabStatus};
+pub use tab_isolation::{TabProfile, NetworkConfig, TabStatus, TLSProfile, HTTP2Settings, TCPFingerprint};
 pub use fingerprint::BrowserFingerprint;
 pub use proxy::{ProxyManager, ProxySettings, ProxyType, FreeProxy, ProxyTestResult};
 pub use http_client::{HttpClient, PublicIpDetector, PublicIpInfo};
@@ -150,7 +150,7 @@ pub use error_recovery::{
 };
 pub use performance_optimizer::{
     PerformanceOptimizer,
-    PerformanceConfig,
+    PerformanceConfig as PerfOptimizerConfig,
     PerformanceReport,
     CoreWebVitals,
     CacheStats,
@@ -167,7 +167,7 @@ pub use network_intelligence::{
 };
 pub use privacy_fortress::{
     PrivacyFortress,
-    PrivacyConfig,
+    PrivacyConfig as PrivacyFortressConfig,
     PrivacyReport,
     PrivacyGrade,
     TrackerStats,
@@ -218,12 +218,10 @@ pub use content_enhancement::{
 
 // Efficiency optimization exports (addressing issues #488-#987)
 pub use efficiency::{
-    EfficiencyManager, EfficiencyConfig, EfficiencyMetrics, PerformanceMetrics,
+    EfficiencyManager, EfficiencyConfig, EfficiencyMetrics, EfficiencyStats,
     BufferPool, PooledBuffer, OptimizedCacheManager, ConnectionPool, ConnectionPoolStats,
-    MemoryOptimizer, MemoryStats, MemoryPressure, MemoryThresholds,
-    CpuOptimizer, CpuStats, CpuUsage, CpuConfig, WorkQueue, BatchProcessor, TaskGuard,
-    AsyncExecutor, ExecutorStats, TaskPriority, TaskState, TaskInfo, ExecutorConfig,
-    LazyInit, ResourceManager, PoolStats,
-    // Backward compatibility aliases
-    MemoryPool, BufferManager, LruCache, PerformanceMonitor,
+    MemoryOptimizer, MemoryStats as EfficiencyMemoryStats, MemoryPressure, 
+    MemoryThresholds as EfficiencyMemoryThresholds,
+    CpuOptimizer, BatchProcessor, ParallelProcessor, unrolled_loop,
+    AsyncExecutor, ExecutorStats, TaskPriority, ScheduledTask, RateLimiter as EfficiencyRateLimiter,
 };

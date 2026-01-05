@@ -54,8 +54,8 @@ impl TextAnalyzer {
         let speaking_time = (word_count as f64 / 150.0).ceil() as u32;
 
         // Unique words and lexical density
-        let unique: std::collections::HashSet<&str> = words.iter().map(|w| w.to_lowercase()).collect::<Vec<_>>()
-            .iter().map(|s| s.as_str()).collect();
+        let lowercase_words: Vec<String> = words.iter().map(|w| w.to_lowercase()).collect();
+        let unique: std::collections::HashSet<&str> = lowercase_words.iter().map(|s| s.as_str()).collect();
         let unique_words = unique.len();
         let lexical_density = if word_count > 0 {
             unique_words as f64 / word_count as f64

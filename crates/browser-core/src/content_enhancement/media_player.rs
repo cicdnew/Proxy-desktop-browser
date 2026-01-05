@@ -249,8 +249,3 @@ impl Default for MediaPlayer {
     }
 }
 
-// =============================================================================
-// Content Transformation
-// =============================================================================
-
-/// Content transformer for accessibility and enhancement

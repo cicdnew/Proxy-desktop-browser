@@ -69,7 +69,7 @@ pub struct BrowserSettings {
     pub headless_mode: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 /// Enumeration of WebRtcPolicy variants.
 pub enum WebRtcPolicy {
     Default,
@@ -264,7 +264,7 @@ impl Default for BrowserController {
 use std::path::PathBuf;
 
 /// Download state enumeration
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 /// Enumeration of DownloadState variants.
 pub enum DownloadState {
     Pending,
@@ -484,7 +484,7 @@ impl Default for DownloadManager {
 // ============================================================================
 
 /// Context menu item types
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 /// Enumeration of ContextMenuItemType variants.
 pub enum ContextMenuItemType {
     Normal,
@@ -571,7 +571,7 @@ impl ContextMenuItem {
 }
 
 /// Context types for different areas of the browser
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 /// Enumeration of ContextType variants.
 pub enum ContextType {
     Page,

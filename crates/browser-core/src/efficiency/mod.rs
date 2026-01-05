@@ -12,9 +12,9 @@ pub mod async_executor;
 
 pub use buffer_pool::{BufferPool, PooledBuffer};
 pub use cache_manager::OptimizedCacheManager;
-pub use connection_pool::{ConnectionPool, PooledConnection, PoolStats, ConnectionState};
-pub use memory_optimizer::{MemoryOptimizer, MemoryStats, Lazy};
-pub use cpu_optimizer::{CpuOptimizer, BatchProcessor, ParallelProcessor, likely, unlikely, unrolled_loop};
+pub use connection_pool::{ConnectionPool, PooledConnection, ConnectionPoolStats};
+pub use memory_optimizer::{MemoryOptimizer, MemoryStats, MemoryThresholds, MemoryPressure};
+pub use cpu_optimizer::{CpuOptimizer, BatchProcessor, ParallelProcessor, unrolled_loop};
 pub use async_executor::{AsyncExecutor, ExecutorStats, TaskPriority, ScheduledTask, RateLimiter};
 
 use std::sync::atomic::{AtomicUsize, Ordering};

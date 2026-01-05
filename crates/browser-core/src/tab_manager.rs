@@ -7,7 +7,7 @@
 //! - Resource management per tab
 
 use crate::fingerprint::BrowserFingerprint;
-use crate::tab_isolation::{NetworkConfig, TabProfile, TabStatus};
+use crate::tab_isolation::{NetworkConfig, TabProfile, TabStatus, TLSProfile, HTTP2Settings, TCPFingerprint};
 use anyhow::{anyhow, Result};
 use std::collections::HashMap;
 use std::time::SystemTime;
@@ -134,27 +134,37 @@ impl TabIPManager {
             webgl_renderer: "ANGLE (Intel HD Graphics)".to_string(),
             canvas_hash: self.generate_canvas_hash(),
             audio_hash: self.generate_audio_hash(),
-            fonts: vec![
-                "Arial".to_string(),
-                "Helvetica".to_string(),
-                "Times New Roman".to_string(),
-            ],
         })
     }
 
-    fn create_network_config(&self, ip: &VirtualIP) -> Result<NetworkConfig> {
+    fn create_network_config(&self, _ip: &VirtualIP) -> Result<NetworkConfig> {
         Ok(NetworkConfig {
             dns_servers: vec!["1.1.1.1".to_string(), "8.8.8.8".to_string()],
             proxy_url: None,
-            bypass_list: vec![],
-            force_ipv4: true,
-            custom_headers: HashMap::from([
-                ("Accept-Language".to_string(), ip.language.clone()),
-                (
-                    "Accept".to_string(),
-                    "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8".to_string(),
-                ),
-            ]),
+            tls_profile: TLSProfile {
+                version: "TLS 1.3".to_string(),
+                cipher_suites: vec![
+                    "TLS_AES_128_GCM_SHA256".to_string(),
+                    "TLS_AES_256_GCM_SHA384".to_string(),
+                    "TLS_CHACHA20_POLY1305_SHA256".to_string(),
+                ],
+                extensions: vec![
+                    "server_name".to_string(),
+                    "supported_versions".to_string(),
+                    "key_share".to_string(),
+                ],
+                ja3_hash: "".to_string(),
+            },
+            http2_settings: HTTP2Settings {
+                settings_frame: vec![(1, 65536), (2, 0), (3, 1000), (4, 6291456), (6, 262144)],
+                window_update: 15663105,
+                priority: vec![],
+            },
+            tcp_fingerprint: TCPFingerprint {
+                ttl: 64,
+                window_size: 65535,
+                options: vec!["mss".to_string(), "nop".to_string(), "ws".to_string(), "nop".to_string(), "nop".to_string(), "ts".to_string()],
+            },
         })
     }
 
