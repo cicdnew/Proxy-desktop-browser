@@ -1,3 +1,11 @@
+//! Fingerprint Module
+//!
+//! Provides browser fingerprint management including:
+//! - Canvas fingerprint protection
+//! - WebGL fingerprint randomization
+//! - Audio context fingerprint spoofing
+//! - User-Agent rotation
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,3 +1,7 @@
+//! Tab Lifecycle
+//!
+//! Integration and unit tests for the module.
+
 use browser_core::TabStatus;
 use serde_json::{to_string, from_str};
 

@@ -1,3 +1,11 @@
+//! HTTP Client Module
+//!
+//! Provides HTTP client functionality with:
+//! - Retry logic with exponential backoff
+//! - Rate limiting support
+//! - Proxy integration
+//! - Timeout and connection management
+
 use anyhow::{anyhow, Result};
 use reqwest::{Client, Proxy};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};

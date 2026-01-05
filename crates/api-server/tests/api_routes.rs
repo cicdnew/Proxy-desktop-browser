@@ -1,3 +1,7 @@
+//! Api Routes
+//!
+//! Integration and unit tests for the module.
+
 use std::sync::Arc;
 
 use api_server::ApiServer;

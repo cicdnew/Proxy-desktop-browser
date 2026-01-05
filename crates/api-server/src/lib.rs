@@ -1,3 +1,11 @@
+//! API Server Library
+//!
+//! Provides the API server implementation including:
+//! - RESTful endpoints for tab management
+//! - IP rotation and validation endpoints
+//! - Proxy configuration management
+//! - Health check and monitoring endpoints
+
 use anyhow::Result;
 use axum::{
     extract::{Path, State},

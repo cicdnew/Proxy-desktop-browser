@@ -1,3 +1,10 @@
+//! API Server Main Entry Point
+//!
+//! This is the main entry point for the API server that provides:
+//! - RESTful API endpoints for proxy management
+//! - Tab and IP management integration
+//! - Virtual IP generation and rotation
+
 use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;

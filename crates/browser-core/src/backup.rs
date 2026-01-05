@@ -1,3 +1,11 @@
+//! Backup Module
+//!
+//! Provides backup and restore functionality including:
+//! - Full and incremental backups
+//! - Backup scheduling and automation
+//! - Data compression and encryption
+//! - Import/Export with various formats
+
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};

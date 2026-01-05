@@ -1,3 +1,10 @@
+//! PAC Server Module
+//!
+//! Provides Proxy Auto-Configuration (PAC) server including:
+//! - Dynamic PAC script generation
+//! - Rule-based proxy selection
+//! - Local HTTP server for PAC file serving
+
 use anyhow::{anyhow, Result};
 use std::collections::HashMap;
 use std::sync::Arc;

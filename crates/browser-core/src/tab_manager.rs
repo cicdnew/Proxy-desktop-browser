@@ -1,3 +1,11 @@
+//! Tab Manager Module
+//!
+//! Provides browser tab management including:
+//! - Tab creation and lifecycle management
+//! - Tab state persistence
+//! - Multi-tab coordination
+//! - Resource management per tab
+
 use crate::fingerprint::BrowserFingerprint;
 use crate::tab_isolation::{NetworkConfig, TabProfile, TabStatus};
 use anyhow::{anyhow, Result};

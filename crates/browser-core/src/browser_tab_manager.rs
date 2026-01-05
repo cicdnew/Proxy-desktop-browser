@@ -1,3 +1,13 @@
+//! Browser Tab Manager Module
+//!
+//! Provides comprehensive browser tab management including:
+//! - Tab creation with proxy and fingerprint configuration
+//! - Tab navigation (back, forward, reload, stop)
+//! - Tab switching and focus management
+//! - IP rotation per tab
+//! - Session isolation between tabs
+//! - Browsing data management
+
 use anyhow::{Result, anyhow};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -87,6 +97,10 @@ impl BrowserTabManager {
 
 
     /// Create a new browser tab
+    /// Create a new browser tab with the specified configuration
+    ///
+    /// # Arguments
+    /// * `config` - Tab creation configuration
     pub async fn create_tab(&self, config: CreateTabConfig) -> Result<BrowserTab> {
         let tab_id = Uuid::new_v4().to_string();
         info!("Creating new browser tab: {}", tab_id);
@@ -145,6 +159,10 @@ impl BrowserTabManager {
     }
 
     /// Close a browser tab
+    /// Close a browser tab
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab to close
     pub async fn close_tab(&self, tab_id: &str) -> Result<()> {
         info!("Closing browser tab: {}", tab_id);
 
@@ -175,6 +193,10 @@ impl BrowserTabManager {
     }
 
     /// Switch to a specific tab
+    /// Switch to a specific tab
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab to switch to
     pub async fn switch_to_tab(&self, tab_id: &str) -> Result<()> {
         debug!("Switching to browser tab: {}", tab_id);
 
@@ -203,6 +225,11 @@ impl BrowserTabManager {
     }
 
     /// Navigate a tab to a new URL
+    /// Navigate a tab to a URL
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab
+    /// * `url` - URL to navigate to
     pub async fn navigate(&self, tab_id: &str, url: &str) -> Result<()> {
         debug!("Navigating browser tab {} to: {}", tab_id, url);
 
@@ -222,6 +249,10 @@ impl BrowserTabManager {
     }
 
     /// Go back in navigation history
+    /// Navigate back in tab history
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab
     pub async fn go_back(&self, tab_id: &str) -> Result<()> {
         let tabs = self.tabs.read().await;
         
@@ -234,6 +265,10 @@ impl BrowserTabManager {
     }
 
     /// Go forward in navigation history
+    /// Navigate forward in tab history
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab
     pub async fn go_forward(&self, tab_id: &str) -> Result<()> {
         let tabs = self.tabs.read().await;
         
@@ -246,6 +281,10 @@ impl BrowserTabManager {
     }
 
     /// Reload the current page
+    /// Reload the current page in a tab
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab
     pub async fn reload(&self, tab_id: &str) -> Result<()> {
         let tabs = self.tabs.read().await;
         
@@ -258,6 +297,10 @@ impl BrowserTabManager {
     }
 
     /// Stop loading the current page
+    /// Stop loading in a tab
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab
     pub async fn stop(&self, tab_id: &str) -> Result<()> {
         let tabs = self.tabs.read().await;
         
@@ -270,6 +313,11 @@ impl BrowserTabManager {
     }
 
     /// Set zoom level for a tab
+    /// Set the zoom level for a tab
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab
+    /// * `level` - Zoom level (1.0 = 100%)
     pub async fn set_zoom(&self, tab_id: &str, level: f64) -> Result<()> {
         let tabs = self.tabs.read().await;
         
@@ -282,6 +330,11 @@ impl BrowserTabManager {
     }
 
     /// Rotate IP for a tab
+    /// Rotate the IP for a tab
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab
+    /// * `country_code` - Optional country code for geo-targeting
     pub async fn rotate_ip(&self, tab_id: &str, country_code: Option<&str>) -> Result<VirtualIP> {
         debug!("Rotating IP for browser tab: {}", tab_id);
 
@@ -314,15 +367,21 @@ impl BrowserTabManager {
     }
 
     /// Get all browser tabs
+    /// Get all open tabs
     pub async fn get_tabs(&self) -> Vec<BrowserTab> {
         self.tabs.read().await.values().cloned().collect()
     }
 
     /// Get a specific browser tab
+    /// Get a specific tab by ID
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab
     pub async fn get_tab(&self, tab_id: &str) -> Option<BrowserTab> {
         self.tabs.read().await.get(tab_id).cloned()
     }
 
+    /// Get the currently active tab
     /// Get the currently active tab
     pub async fn get_active_tab(&self) -> Option<BrowserTab> {
         let active_id = self.active_tab.read().await.clone()?;
@@ -330,6 +389,11 @@ impl BrowserTabManager {
     }
 
     /// Execute JavaScript in a tab
+    /// Execute JavaScript in a tab
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab
+    /// * `script` - JavaScript code to execute
     pub async fn execute_script(&self, tab_id: &str, script: &str) -> Result<()> {
         let tabs = self.tabs.read().await;
         
@@ -396,6 +460,11 @@ impl BrowserTabManager {
     }
 
     /// Clear browsing data for a tab
+    /// Clear browsing data for a tab
+    ///
+    /// # Arguments
+    /// * `tab_id` - ID of the tab
+    /// * `data_types` - Types of data to clear (cookies, cache, history, etc.)
     pub async fn clear_browsing_data(&self, tab_id: &str, data_types: &[&str]) -> Result<()> {
         let tabs = self.tabs.read().await;
         
@@ -447,6 +516,7 @@ impl BrowserTabManager {
         }
     }
 
+    /// Get tab statistics
     /// Get tab statistics
     pub async fn get_stats(&self) -> TabStats {
         let tabs = self.tabs.read().await;

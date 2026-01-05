@@ -1,3 +1,11 @@
+//! Browser Controls Module
+//!
+//! Provides browser control functionality including:
+//! - Navigation controls (back, forward, reload)
+//! - Page state management
+//! - Download management
+//! - Context menu handling
+
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

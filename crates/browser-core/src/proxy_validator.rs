@@ -1,3 +1,13 @@
+//! Proxy Validator Module
+//!
+//! Provides proxy validation and health monitoring including:
+//! - Proxy connectivity testing
+//! - Response time measurement
+//! - Geo-location verification
+//! - IP leak detection
+//! - Health monitoring with automatic quarantine
+//! - Batch validation with concurrency control
+
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -73,6 +83,13 @@ impl ProxyValidator {
     }
 
     /// Validates the proxy.
+    /// Validate a single proxy
+    ///
+    /// # Arguments
+    /// * `proxy` - The proxy to validate
+    ///
+    /// # Returns
+    /// ValidationResult containing connectivity, response time, and other metrics
     pub async fn validate_proxy(&self, proxy: &FreeProxy) -> Result<ValidationResult> {
         let _permit = self.semaphore.acquire().await
             .map_err(|e| anyhow!("Failed to acquire semaphore: {}", e))?;
@@ -221,6 +238,13 @@ impl ProxyValidator {
     }
 
     /// Validates the batch.
+    /// Validate multiple proxies concurrently
+    ///
+    /// # Arguments
+    /// * `proxies` - Slice of proxies to validate
+    ///
+    /// # Returns
+    /// Vector of (proxy, validation result) pairs
     pub async fn validate_batch(&self, proxies: &[FreeProxy]) -> Vec<(FreeProxy, ValidationResult)> {
         let mut results = Vec::new();
         
@@ -294,6 +318,10 @@ impl ProxyHealthChecker {
     }
 
     /// Starts the health monitoring.
+    /// Start continuous health monitoring of proxies
+    ///
+    /// # Arguments
+    /// * `proxies` - Shared proxy list to monitor
     pub async fn start_health_monitoring(&self, proxies: Arc<tokio::sync::RwLock<Vec<FreeProxy>>>) {
         let mut interval = tokio::time::interval(self.check_interval);
         
@@ -379,6 +407,14 @@ impl ProxyQuarantineManager {
     }
 
     /// Record a failure for a proxy, potentially quarantining it
+    /// Record a proxy failure
+    ///
+    /// # Arguments
+    /// * `proxy` - The failing proxy
+    /// * `reason` - The failure reason
+    ///
+    /// # Returns
+    /// True if the proxy was quarantined
     pub async fn record_failure(&self, proxy: &FreeProxy, reason: String) -> bool {
         let key = Self::proxy_key(proxy);
         let mut quarantined = self.quarantined.write().await;
@@ -422,6 +458,10 @@ impl ProxyQuarantineManager {
     }
 
     /// Record a success for a proxy, potentially releasing it from quarantine
+    /// Record a successful proxy operation
+    ///
+    /// # Arguments
+    /// * `proxy` - The successful proxy
     pub async fn record_success(&self, proxy: &FreeProxy) {
         let key = Self::proxy_key(proxy);
         let mut quarantined = self.quarantined.write().await;
@@ -432,6 +472,10 @@ impl ProxyQuarantineManager {
     }
 
     /// Check if a proxy is currently quarantined
+    /// Check if a proxy is currently quarantined
+    ///
+    /// # Arguments
+    /// * `proxy` - The proxy to check
     pub async fn is_quarantined(&self, proxy: &FreeProxy) -> bool {
         let key = Self::proxy_key(proxy);
         let quarantined = self.quarantined.read().await;
@@ -444,12 +488,14 @@ impl ProxyQuarantineManager {
     }
 
     /// Get all quarantined proxies
+    /// Get all quarantined proxies
     pub async fn get_quarantined(&self) -> Vec<QuarantinedProxy> {
         let quarantined = self.quarantined.read().await;
         quarantined.values().cloned().collect()
     }
 
     /// Release proxies that have served their quarantine time
+    /// Release proxies whose quarantine period has expired
     pub async fn release_expired(&self) -> Vec<FreeProxy> {
         let mut quarantined = self.quarantined.write().await;
         let now = Utc::now();
@@ -471,6 +517,7 @@ impl ProxyQuarantineManager {
         released
     }
 
+    /// Get quarantine statistics
     /// Get quarantine statistics
     pub async fn get_stats(&self) -> QuarantineStats {
         let quarantined = self.quarantined.read().await;
@@ -558,6 +605,11 @@ impl GeoVerifier {
     }
 
     /// Verify that a proxy's detected IP matches its claimed geographic location
+    /// Verify a proxy's claimed location
+    ///
+    /// # Arguments
+    /// * `proxy` - The proxy to verify
+    /// * `detected_ip` - The IP detected when using the proxy
     pub async fn verify_proxy_location(&self, proxy: &FreeProxy, detected_ip: &str) -> GeoVerificationResult {
         if !self.config.enabled {
             return GeoVerificationResult {

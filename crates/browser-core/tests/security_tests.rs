@@ -1,3 +1,7 @@
+//! Security Tests
+//!
+//! Integration and unit tests for the module.
+
 use browser_core::{
     TlsManager, TlsConfig, TlsVersion, CertificateInfo, CertificateStatus,
     AuditManager, AuditEventType, AuditSeverity,

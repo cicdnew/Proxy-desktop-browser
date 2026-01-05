@@ -1,3 +1,7 @@
+//! Stability Tests
+//!
+//! Integration and unit tests for the module.
+
 use browser_core::{
     MemoryManager, MemoryPressure, ResourceType,
     ErrorRecoveryManager, ErrorCategory, ErrorSeverity,

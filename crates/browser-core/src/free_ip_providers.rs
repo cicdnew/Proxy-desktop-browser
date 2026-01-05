@@ -1,3 +1,11 @@
+//! Free IP Providers Module
+//!
+//! Provides integration with free proxy sources including:
+//! - Multiple provider support
+//! - Automatic proxy fetching and validation
+//! - Provider health monitoring
+//! - Rate limiting per provider
+
 use anyhow::{Result, anyhow};
 use serde::Deserialize;
 use async_trait::async_trait;

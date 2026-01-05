@@ -1,3 +1,7 @@
+//! Network Privacy Tests
+//!
+//! Integration and unit tests for the module.
+
 use browser_core::{
     DnsManager, DnsConfig, DnsStrategy,
     PrivacyManager, PrivacyConfig, PrivacyLevel, TrackingCategory,

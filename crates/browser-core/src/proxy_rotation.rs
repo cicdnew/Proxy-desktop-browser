@@ -1,3 +1,11 @@
+//! Proxy Rotation Module
+//!
+//! Provides intelligent proxy rotation including:
+//! - Multiple rotation strategies (round-robin, random, performance-based)
+//! - Automatic failover on proxy failure
+//! - Session persistence for sticky sessions
+//! - Rate limiting and cooldown management
+
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Duration, Utc};
 use rand::Rng;
