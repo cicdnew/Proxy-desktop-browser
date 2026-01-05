@@ -50,7 +50,6 @@ pub mod efficiency;
 // V1000 Additional Feature Modules
 pub mod automation;
 pub mod content_enhancement;
-pub mod efficiency;
 pub mod browser_profile;
 pub mod screenshot;
 
@@ -219,15 +218,12 @@ pub use content_enhancement::{
 
 // Efficiency optimization exports (addressing issues #488-#987)
 pub use efficiency::{
-    MemoryPool,
-    PoolStats,
-    BufferManager,
-    CpuOptimizer,
-    LazyInit,
-    PerformanceMonitor,
-    PerformanceMetrics,
-    LruCache,
-    ConnectionPool,
-    BatchProcessor,
-    ResourceManager,
+    EfficiencyManager, EfficiencyConfig, EfficiencyMetrics, PerformanceMetrics,
+    BufferPool, PooledBuffer, OptimizedCacheManager, ConnectionPool, ConnectionPoolStats,
+    MemoryOptimizer, MemoryStats, MemoryPressure, MemoryThresholds,
+    CpuOptimizer, CpuStats, CpuUsage, CpuConfig, WorkQueue, BatchProcessor, TaskGuard,
+    AsyncExecutor, ExecutorStats, TaskPriority, TaskState, TaskInfo, ExecutorConfig,
+    LazyInit, ResourceManager, PoolStats,
+    // Backward compatibility aliases
+    MemoryPool, BufferManager, LruCache, PerformanceMonitor,
 };
