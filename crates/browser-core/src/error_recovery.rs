@@ -674,7 +674,7 @@ mod tests {
         // Just verify that stats can be retrieved successfully
         let stats = manager.get_stats().await;
         // Stats should have valid values (>= 0)
-        assert!(stats.total_errors >= 0 || stats.total_errors == 0);
+        // total_errors is usize, always non-negative
         assert!(stats.recovery_rate >= 0.0);
     }
 
