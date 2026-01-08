@@ -36,7 +36,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "category": "Network",
+    "category": "Utility",
     "shortDescription": "Privacy-focused browser with virtual IP routing",
     "longDescription": "A privacy-focused browser that routes all traffic through virtual IPs and proxy servers for enhanced anonymity.",
     "linux": {
