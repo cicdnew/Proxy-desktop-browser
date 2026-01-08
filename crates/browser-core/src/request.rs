@@ -410,6 +410,7 @@ impl RequestBuilder {
 }
 
 /// Request manager for handling multiple requests
+#[allow(dead_code)]
 pub struct RequestManager {
     client: Client,
     default_config: RequestConfig,
