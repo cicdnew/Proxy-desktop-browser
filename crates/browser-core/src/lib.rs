@@ -148,7 +148,9 @@ pub use error_recovery::{
     RecoveryStrategy,
     RecoveryResult,
     ErrorStats,
-    CrashPrediction
+    CrashPrediction,
+    ErrorSeverity,
+    OperationMetrics,
 };
 pub use performance_optimizer::{
     PerformanceOptimizer,

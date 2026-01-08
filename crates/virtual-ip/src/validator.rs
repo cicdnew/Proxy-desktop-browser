@@ -19,6 +19,12 @@ pub struct IPValidator {
     client: Client,
 }
 
+impl Default for IPValidator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IPValidator {
     /// Creates a new new.
     pub fn new() -> Self {

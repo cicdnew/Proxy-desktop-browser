@@ -106,7 +106,7 @@ pub fn load_countries_from_file(path: &Path) -> Vec<Country> {
         .ok()
         .and_then(|data| serde_json::from_str::<Vec<Country>>(&data).ok())
         .filter(|v| !v.is_empty())
-        .unwrap_or_else(|| CountryDatabase::load_all_countries())
+        .unwrap_or_else(CountryDatabase::load_all_countries)
 }
 
 /// Load IP ranges from a JSON file if present; otherwise fallback to placeholder list.
@@ -115,5 +115,5 @@ pub fn load_ip_ranges_from_file(path: &Path) -> Vec<IPRange> {
         .ok()
         .and_then(|data| serde_json::from_str::<Vec<IPRange>>(&data).ok())
         .filter(|v| !v.is_empty())
-        .unwrap_or_else(|| load_ip_ranges())
+        .unwrap_or_else(load_ip_ranges)
 }
