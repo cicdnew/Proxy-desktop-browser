@@ -140,6 +140,7 @@ impl TextAnalyzer {
 #[cfg(test)]
 mod enhanced_content_tests {
     use super::*;
+    use super::super::{AdvancedLanguageDetector, ScriptType};
 
     #[test]
     fn test_advanced_language_detection() {

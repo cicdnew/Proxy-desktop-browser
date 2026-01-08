@@ -33,7 +33,7 @@ impl<'a> SecurityManager<'a> {
             .link_rel(Some("noopener noreferrer"));
 
         // URL validation regex
-        let url_regex = Regex::new(r"^(https?|mailto):[^\s/$.?#].[^\s]*$").expect("Invalid URL regex pattern");
+        let url_regex = Regex::new(r"^(https?://[^\s]+|mailto:[^\s]+)$").expect("Invalid URL regex pattern");
 
         Self {
             html_sanitizer: sanitizer,

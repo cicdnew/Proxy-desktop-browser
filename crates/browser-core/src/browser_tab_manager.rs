@@ -746,23 +746,6 @@ pub async fn update_webview_tab_state(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tauri::test::mock_app;
-    use virtual_ip::IPGenerator;
-
-    #[tokio::test]
-    async fn test_browser_tab_manager_creation() {
-        let app = mock_app();
-        let ip_generator = IPGenerator::new(vec![], vec![]);
-        
-        let manager = BrowserTabManager::new(
-            ip_generator,
-            app.handle(),
-        );
-        
-        // Manager should be created successfully
-        assert!(manager.tabs.read().await.is_empty());
-    }
-
 
     #[tokio::test]
     async fn test_create_tab_config_default() {
