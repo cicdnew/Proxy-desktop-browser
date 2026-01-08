@@ -1,0 +1,786 @@
+name: test
+
+on:
+  # Manual trigger - click "Run workflow" button
+  workflow_dispatch:
+    inputs:
+      special_link:
+        description: "Special link URL to open every 5 hours (leave empty to use default)"
+        required: false
+        type: string
+        default: 'https://www.google.com'
+  
+  # Automatic schedule - customize the time below
+  schedule:
+    # Run every day at 8:00 AM UTC (Change this to your preferred time)
+    # Format: minute hour day month weekday
+    # Examples:
+    #   - cron: '0 8 * * *'     # Every day at 8:00 AM
+    #   - cron: '0 */6 * * *'   # Every 6 hours
+    #   - cron: '0 0 * * 0'     # Every Sunday at midnight
+    #   - cron: '30 14 * * 1-5' # Every weekday at 2:30 PM
+    - cron: '30 14 * * 1-5'  # Currently: Every weekday at 2:30 PM
+
+jobs:
+  secure-rdp:
+    runs-on: windows-latest-l
+    timeout-minutes: 43200  # 30 days max
+
+    steps:
+      - name: "Restore Previous Session Data"
+        uses: actions/download-artifact@v4
+        with:
+          name: user-data-backup
+          path: C:\backup-restore
+        continue-on-error: true
+        
+      - name: "Extract Backed Up Files"
+        shell: pwsh
+        run: |
+          Write-Host "Checking for previous session backup..."
+          
+          if (Test-Path "C:\backup-restore") {
+            Write-Host "✓ Previous backup found! Restoring your files..."
+            
+            # Restore Desktop
+            if (Test-Path "C:\backup-restore\Desktop") {
+              Copy-Item -Path "C:\backup-restore\Desktop\*" -Destination "$env:USERPROFILE\Desktop" -Recurse -Force -ErrorAction SilentlyContinue
+              $desktopFiles = (Get-ChildItem "$env:USERPROFILE\Desktop" -File).Count
+              Write-Host "✓ Restored Desktop: $desktopFiles files"
+            }
+            
+            # Restore Documents
+            if (Test-Path "C:\backup-restore\Documents") {
+              Copy-Item -Path "C:\backup-restore\Documents\*" -Destination "$env:USERPROFILE\Documents" -Recurse -Force -ErrorAction SilentlyContinue
+              $docFiles = (Get-ChildItem "$env:USERPROFILE\Documents" -File -Recurse).Count
+              Write-Host "✓ Restored Documents: $docFiles files"
+            }
+            
+            # Restore Downloads
+            if (Test-Path "C:\backup-restore\Downloads") {
+              Copy-Item -Path "C:\backup-restore\Downloads\*" -Destination "$env:USERPROFILE\Downloads" -Recurse -Force -ErrorAction SilentlyContinue
+              $downloadFiles = (Get-ChildItem "$env:USERPROFILE\Downloads" -File).Count
+              Write-Host "✓ Restored Downloads: $downloadFiles files"
+            }
+            
+            # Restore installed software list
+            if (Test-Path "C:\backup-restore\installed_software.txt") {
+              Write-Host "✓ Found software installation list"
+              Copy-Item -Path "C:\backup-restore\installed_software.txt" -Destination "C:\installed_software.txt" -Force
+            }
+            
+            Write-Host ""
+            Write-Host "✓ ALL YOUR OLD FILES HAVE BEEN RESTORED!"
+            Write-Host ""
+            
+          } else {
+            Write-Host "No previous backup found - this is your first run"
+            Write-Host "Your files will be automatically backed up"
+          }
+        
+      - name: Validate workflow inputs
+        shell: pwsh
+        run: |
+          Write-Host "Validating workflow inputs..."
+          
+          # Validate special_link input (use default for scheduled runs)
+          $link = "${{ github.event.inputs.special_link }}"
+          if ([string]::IsNullOrWhiteSpace($link)) {
+            $link = "https://www.google.com"
+            Write-Host "Using default link for scheduled run: $link"
+          }
+          
+          try {
+            $uri = [System.Uri]::new($link)
+            if (-not ($uri.Scheme -eq "http" -or $uri.Scheme -eq "https")) {
+              throw "URL must start with http:// or https://"
+            }
+            if ($uri.AbsolutePath.Length -gt 2048) {
+              throw "URL length exceeds maximum allowed (2048 characters)"
+            }
+            Write-Host "✓ Special link validated: $link"
+          } catch {
+            Write-Error "Invalid special_link format: $($_.Exception.Message)"
+            exit 1
+          }
+          
+          # Check available disk space
+          $disk = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'"
+          $freeSpaceGB = [math]::Round($disk.FreeSpace / 1GB, 2)
+          if ($freeSpaceGB -lt 5) {
+            Write-Warning "Low disk space: ${freeSpaceGB}GB available. At least 5GB recommended"
+          } else {
+            Write-Host "✓ Sufficient disk space: ${freeSpaceGB}GB available"
+          }
+          
+          # Check memory
+          $memory = Get-CimInstance -ClassName Win32_ComputerSystem
+          $totalMemoryGB = [math]::Round($memory.TotalPhysicalMemory / 1GB, 2)
+          Write-Host "✓ Total memory: ${totalMemoryGB}GB"
+          
+          Write-Host "✓ Input validation completed successfully"
+
+      - name: "Session Configuration for Windows Latest 2025"
+        shell: pwsh
+        run: |
+          Write-Host "WINDOWS LATEST 2025 ANYDESK SESSION"
+          Write-Host "=" * 50
+          Write-Host "Runner: windows-latest"
+          Write-Host "Image: Windows Latest (2025)"
+          Write-Host "Group: Default"
+          Write-Host "Hardware: Enterprise GitHub Runner"
+          Write-Host "=" * 50
+          Write-Host ""
+
+      - name: "Install and Setup AnyDesk"
+        shell: pwsh
+        run: |
+          try {
+            Write-Host "Installing AnyDesk for Windows Latest 2025..."
+            
+            # Check if AnyDesk is already installed
+            $existingAnyDesk = Get-Process -Name "AnyDesk" -ErrorAction SilentlyContinue
+            if ($existingAnyDesk) {
+              Write-Warning "AnyDesk is already running. Stopping existing process..."
+              Stop-Process -Name "AnyDesk" -Force -ErrorAction SilentlyContinue
+              Start-Sleep -Seconds 3
+            }
+            
+            # Download and install AnyDesk
+            $anydeskUrl = "https://download.anydesk.com/AnyDesk.exe"
+            $anydeskExe = "$env:TEMP\AnyDesk.exe"
+            $anydeskInstallPath = "C:\Program Files (x86)\AnyDesk"
+            
+            # Clean up previous downloads
+            if (Test-Path $anydeskExe) {
+              Remove-Item $anydeskExe -Force
+            }
+            
+            Write-Host "Downloading AnyDesk from: $anydeskUrl"
+            try {
+              $downloadProgress = @{
+                Activity = "Downloading AnyDesk"
+                Status = "In progress"
+              }
+              
+              Invoke-WebRequest -Uri $anydeskUrl -OutFile $anydeskExe -ErrorAction Stop -TimeoutSec 300
+              
+              if (-not (Test-Path $anydeskExe)) {
+                throw "Download failed - file not found after download"
+              }
+              
+              $fileSize = (Get-Item $anydeskExe).Length / 1MB
+              Write-Host "✓ AnyDesk downloaded successfully (${fileSize:F2} MB)"
+              
+            } catch {
+              Write-Error "Failed to download AnyDesk: $($_.Exception.Message)"
+              exit 1
+            }
+            
+            Write-Host "Installing AnyDesk..."
+            try {
+              # Install AnyDesk silently with auto-start enabled
+              $installArgs = @(
+                  "--install", $anydeskInstallPath,
+                  "--start-with-win",
+                  "--silent"
+              )
+              
+              $process = Start-Process -FilePath $anydeskExe -ArgumentList $installArgs -Wait -NoNewWindow -PassThru -ErrorAction Stop
+              
+              if ($process.ExitCode -ne 0) {
+                throw "Installation failed with exit code: $($process.ExitCode)"
+              }
+              
+              Write-Host "✓ Installation completed successfully"
+              
+            } catch {
+              Write-Error "AnyDesk installation failed: $($_.Exception.Message)"
+              
+              # Cleanup failed installation
+              if (Test-Path $anydeskExe) {
+                Remove-Item $anydeskExe -Force -ErrorAction SilentlyContinue
+              }
+              exit 1
+            }
+            
+            # Wait for installation to complete
+            Start-Sleep -Seconds 5
+            
+            # Verify installation - check multiple possible locations
+            Write-Host "Verifying AnyDesk installation..."
+            $possiblePaths = @(
+                "$anydeskInstallPath\AnyDesk.exe",
+                "$env:ProgramFiles\AnyDesk\AnyDesk.exe",
+                "$env:ProgramFiles(x86)\AnyDesk\AnyDesk.exe",
+                "$env:APPDATA\AnyDesk\AnyDesk.exe",
+                "$anydeskExe"
+            )
+            
+            $anydeskPath = $null
+            foreach ($path in $possiblePaths) {
+              if (Test-Path $path) {
+                $anydeskPath = $path
+                Write-Host "✓ AnyDesk executable found at: $anydeskPath"
+                break
+              }
+            }
+            
+            if (-not $anydeskPath) {
+              Write-Host "Checking for AnyDesk in PATH..."
+              try {
+                $anydeskInPath = Get-Command "AnyDesk.exe" -ErrorAction SilentlyContinue
+                if ($anydeskInPath) {
+                  $anydeskPath = $anydeskInPath.Source
+                  Write-Host "✓ AnyDesk executable found in PATH at: $anydeskPath"
+                } else {
+                  throw "AnyDesk executable not found after installation"
+                }
+              } catch {
+                Write-Error "AnyDesk verification failed: $($_.Exception.Message)"
+                Write-Error "Checked paths: $($possiblePaths -join ', ')"
+                exit 1
+              }
+            }
+            
+            # Generate a secure password for unattended access
+            Write-Host "Generating secure AnyDesk password..."
+            $upperChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            $lowerChars = 'abcdefghijklmnopqrstuvwxyz'
+            $numberChars = '0123456789'
+            
+            # Generate 12-character secure password (no special chars for compatibility)
+            $passwordChars = ''
+            $passwordChars += ($upperChars.ToCharArray() | Get-Random -Count 4) -join ''
+            $passwordChars += ($lowerChars.ToCharArray() | Get-Random -Count 4) -join ''
+            $passwordChars += ($numberChars.ToCharArray() | Get-Random -Count 4) -join ''
+            $anydeskPassword = ($passwordChars.ToCharArray() | Sort-Object { Get-Random }) -join ''
+            
+            # Validate AnyDesk password
+            if ($anydeskPassword.Length -ne 12 -or 
+                $anydeskPassword -notmatch '[A-Z]' -or 
+                $anydeskPassword -notmatch '[a-z]' -or 
+                $anydeskPassword -notmatch '[0-9]') {
+              throw "Generated AnyDesk password does not meet complexity requirements"
+            }
+            
+            # Start AnyDesk explicitly
+            Write-Host "Starting AnyDesk application..."
+            try {
+              Start-Process -FilePath $anydeskPath -ErrorAction Stop
+              Write-Host "✓ AnyDesk process started"
+            } catch {
+              Write-Error "Failed to start AnyDesk: $($_.Exception.Message)"
+              exit 1
+            }
+            
+            # Wait for AnyDesk to start
+            Write-Host "Waiting for AnyDesk to initialize..."
+            Start-Sleep -Seconds 15
+            
+            # Verify AnyDesk process is running
+            $maxRetries = 10
+            $retryCount = 0
+            $anydeskProcess = $null
+            
+            while (-not $anydeskProcess -and $retryCount -lt $maxRetries) {
+              $anydeskProcess = Get-Process -Name "AnyDesk" -ErrorAction SilentlyContinue
+              if (-not $anydeskProcess) {
+                Write-Warning "AnyDesk process not detected, retrying... (attempt $($retryCount + 1)/$maxRetries)"
+                Start-Sleep -Seconds 5
+                $retryCount++
+                
+                # Try to restart AnyDesk
+                if ($retryCount -lt $maxRetries) {
+                  try {
+                    Start-Process -FilePath $anydeskPath -ErrorAction SilentlyContinue
+                  } catch {
+                    Write-Warning "Failed to restart AnyDesk on attempt $($retryCount + 1)"
+                  }
+                  Start-Sleep -Seconds 5
+                }
+              }
+            }
+            
+            if (-not $anydeskProcess) {
+              Write-Error "AnyDesk process failed to start after $maxRetries attempts"
+              exit 1
+            }
+            
+            Write-Host "✓ AnyDesk process is running (PID: $($anydeskProcess.Id))"
+            
+            # Set unattended access password
+            Write-Host "Configuring AnyDesk for unattended access..."
+            try {
+              $anydeskPassword | & $anydeskPath --set-password
+              Write-Host "✓ AnyDesk password configured"
+            } catch {
+              Write-Error "Failed to set AnyDesk password: $($_.Exception.Message)"
+              exit 1
+            }
+            
+            # Wait for configuration to be applied
+            Write-Host "Waiting for AnyDesk configuration to be applied..."
+            Start-Sleep -Seconds 10
+            
+            # Get AnyDesk ID with enhanced error handling
+            Write-Host "Retrieving AnyDesk ID..."
+            $maxRetries = 60
+            $retryCount = 0
+            $anydeskId = $null
+            
+            while (-not $anydeskId -and $retryCount -lt $maxRetries) {
+              Start-Sleep -Seconds 3
+              $retryCount++
+              
+              try {
+                # Ensure AnyDesk is still running
+                $anydeskProcess = Get-Process -Name "AnyDesk" -ErrorAction SilentlyContinue
+                if (-not $anydeskProcess) {
+                  Write-Warning "AnyDesk process stopped, restarting... (attempt $retryCount/$maxRetries)"
+                  Start-Process -FilePath $anydeskPath -ErrorAction SilentlyContinue
+                  Start-Sleep -Seconds 5
+                  continue
+                }
+                
+                # Try to get AnyDesk ID from the command
+                $idOutput = & $anydeskPath --get-id 2>&1 | Out-String
+                $idOutput = $idOutput.Trim()
+                
+                # Check if output is a valid AnyDesk ID (9-10 digits)
+                if ($idOutput -and $idOutput -match '^\d{9,10}$') {
+                  $anydeskId = $idOutput
+                  Write-Host "✓ AnyDesk ID retrieved: $anydeskId (attempt $retryCount)"
+                } else {
+                  if ($retryCount % 10 -eq 0) {
+                    Write-Host "Waiting for AnyDesk ID... (attempt $retryCount/$maxRetries, output: '$idOutput')"
+                  }
+                }
+              } catch {
+                if ($retryCount % 10 -eq 0) {
+                  Write-Host "Checking AnyDesk status... (attempt $retryCount/$maxRetries, error: $($_.Exception.Message))"
+                }
+              }
+            }
+            
+            if (-not $anydeskId) {
+              Write-Error "Failed to retrieve AnyDesk ID after $maxRetries attempts"
+              exit 1
+            }
+            
+            # Store AnyDesk credentials and path in environment variables
+            echo "ANYDESK_ID=$anydeskId" >> $env:GITHUB_ENV
+            echo "ANYDESK_PASSWORD=$anydeskPassword" >> $env:GITHUB_ENV
+            echo "ANYDESK_PATH=$anydeskPath" >> $env:GITHUB_ENV
+            
+            
+            Write-Host "✓ AnyDesk setup completed successfully!"
+            Write-Host "✓ AnyDesk ID: $anydeskId"
+            Write-Host "✓ AnyDesk Path: $anydeskPath"
+            Write-Host "✓ Unattended Access Password: Configured"
+            
+          } catch {
+            Write-Error "AnyDesk installation failed: $($_.Exception.Message)"
+            
+            # Cleanup on failure
+            try {
+              $anydeskProcess = Get-Process -Name "AnyDesk" -ErrorAction SilentlyContinue
+              if ($anydeskProcess) {
+                Stop-Process -Name "AnyDesk" -Force -ErrorAction SilentlyContinue
+                Write-Host "Stopped AnyDesk process"
+              }
+            } catch {
+              Write-Warning "Failed to cleanup AnyDesk process: $($_.Exception.Message)"
+            }
+            
+            exit 1
+          }
+
+      - name: "Verify AnyDesk Accessibility"
+        shell: pwsh
+        run: |
+          try {
+            Write-Host "Verifying AnyDesk setup..."
+            Write-Host "AnyDesk ID: $env:ANYDESK_ID"
+            
+            # Validate environment variables
+            $requiredEnvVars = @("ANYDESK_ID", "ANYDESK_PASSWORD", "ANYDESK_PATH")
+            $missingVars = @()
+            
+            foreach ($var in $requiredEnvVars) {
+              $value = [System.Environment]::GetEnvironmentVariable($var)
+              if ([string]::IsNullOrWhiteSpace($value)) {
+                $missingVars += $var
+              }
+            }
+            
+            if ($missingVars.Count -gt 0) {
+              throw "Missing required environment variables: $($missingVars -join ', ')"
+            }
+            
+            Write-Host "✓ All required environment variables are set"
+            
+            # Verify AnyDesk is running
+            Write-Host "Verifying AnyDesk service..."
+            $anydeskProcess = $null
+            $maxRetries = 5
+            $retryCount = 0
+            
+            while (-not $anydeskProcess -and $retryCount -lt $maxRetries) {
+              $anydeskProcess = Get-Process -Name "AnyDesk" -ErrorAction SilentlyContinue
+              if (-not $anydeskProcess) {
+                Write-Warning "AnyDesk process not detected, attempting to start... (attempt $($retryCount + 1)/$maxRetries)"
+                try {
+                  if ($env:ANYDESK_PATH -and (Test-Path $env:ANYDESK_PATH)) {
+                    Start-Process -FilePath $env:ANYDESK_PATH -ErrorAction SilentlyContinue
+                    Write-Host "Started AnyDesk from stored path"
+                  } else {
+                    Start-Process -FilePath "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" -ErrorAction SilentlyContinue
+                    Write-Host "Started AnyDesk from default path"
+                  }
+                  Start-Sleep -Seconds 10
+                } catch {
+                  Write-Warning "Failed to start AnyDesk on attempt $($retryCount + 1): $($_.Exception.Message)"
+                }
+                $retryCount++
+              }
+            }
+            
+            if ($anydeskProcess) {
+              Write-Host "✓ AnyDesk is running (Process ID: $($anydeskProcess.Id))"
+              
+              # Test AnyDesk functionality
+              Write-Host "Testing AnyDesk functionality..."
+              try {
+                $testId = & $env:ANYDESK_PATH --get-id 2>&1 | Out-String
+                $testId = $testId.Trim()
+                
+                if ($testId -and $testId -match '^\d{9,10}$') {
+                  if ($testId -eq $env:ANYDESK_ID) {
+                    Write-Host "✓ AnyDesk ID verification successful: $testId"
+                  } else {
+                    Write-Warning "AnyDesk ID mismatch: stored=$env:ANYDESK_ID, current=$testId"
+                    # Update stored ID
+                    echo "ANYDESK_ID=$testId" >> $env:GITHUB_ENV
+                    Write-Host "Updated AnyDesk ID to: $testId"
+                  }
+                } else {
+                  Write-Warning "AnyDesk ID test failed: '$testId'"
+                }
+              } catch {
+                Write-Warning "AnyDesk functionality test failed: $($_.Exception.Message)"
+              }
+            } else {
+              throw "AnyDesk process failed to start after $maxRetries attempts"
+            }
+            
+            # Final system health check
+            Write-Host "Performing final system health check..."
+            try {
+              # Use CIM cmdlets instead of WMI for better compatibility
+              $systemInfo = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+              $uptime = (Get-Date) - $systemInfo.LastBootUpTime
+              $uptimeFormatted = "{0:dd}d {0:hh}h {0:mm}m" -f $uptime
+              
+              $disk = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" -ErrorAction Stop
+              $freeSpaceGB = [math]::Round($disk.FreeSpace / 1GB, 2)
+              
+              Write-Host "✓ System uptime: $uptimeFormatted"
+              Write-Host "✓ Available disk space: ${freeSpaceGB}GB"
+            } catch {
+              Write-Warning "System health check failed: $($_.Exception.Message)"
+              Write-Host "Skipping uptime and disk space checks"
+            }
+            
+            Write-Host "✓ All verification checks completed successfully!"
+            
+          } catch {
+            Write-Error "Verification failed: $($_.Exception.Message)"
+            
+            # Attempt recovery
+            Write-Host "Attempting recovery measures..."
+            try {
+              # Try to restart AnyDesk
+              if ($env:ANYDESK_PATH -and (Test-Path $env:ANYDESK_PATH)) {
+                Start-Process -FilePath $env:ANYDESK_PATH -ErrorAction SilentlyContinue
+                Write-Host "Attempted to restart AnyDesk"
+              }
+              
+            } catch {
+              Write-Warning "Recovery attempts failed: $($_.Exception.Message)"
+            }
+            
+            # Don't exit with error for verification failures, as external connectivity may still work
+            Write-Warning "Some verification checks failed, but the session may still be functional"
+          }
+
+      - name: "Maintain Connection"
+        shell: pwsh
+        run: |
+          Write-Host ""
+          Write-Host "WINDOWS LATEST 2025 ANYDESK ACCESS READY"
+          Write-Host "=" * 50
+          Write-Host "Runner: windows-latest"
+          Write-Host "OS: Windows Latest (2025)"
+          Write-Host "✓ AnyDesk ID: $env:ANYDESK_ID"
+          Write-Host "✓ AnyDesk Password: $env:ANYDESK_PASSWORD"
+          Write-Host ""
+          Write-Host "📱 Connection Instructions:"
+          Write-Host "1. Download and install AnyDesk from: https://anydesk.com/download"
+          Write-Host "2. Open AnyDesk on your local machine"
+          Write-Host "3. Enter the AnyDesk ID: $env:ANYDESK_ID"
+          Write-Host "4. Click 'Connect'"
+          Write-Host "5. Enter the password when prompted: $env:ANYDESK_PASSWORD"
+          Write-Host ""
+          Write-Host "⏰ Session will run until manually stopped"
+          Write-Host "=" * 50
+          Write-Host ""
+          
+          # Keep runner active indefinitely until manually stopped
+          $startTime = Get-Date
+          $lastBackup = Get-Date
+          
+          Write-Host "AnyDesk session is running indefinitely"
+          Write-Host "Manually stop the workflow to terminate the session"
+          Write-Host "✓ Your files will be automatically backed up every 15 minutes"
+          Write-Host ""
+          
+          while ($true) {
+              $uptime = (Get-Date) - $startTime
+              $uptimeFormatted = "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $uptime
+              
+              Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Windows Latest 2025 AnyDesk Active | Uptime: $uptimeFormatted"
+              
+              # Health check - verify AnyDesk is running
+              try {
+                  $anydeskProcess = Get-Process -Name "AnyDesk" -ErrorAction SilentlyContinue
+                  if (-not $anydeskProcess) {
+                      Write-Warning "AnyDesk process not detected, attempting restart..."
+                      if ($env:ANYDESK_PATH -and (Test-Path $env:ANYDESK_PATH)) {
+                          Start-Process -FilePath $env:ANYDESK_PATH -ErrorAction SilentlyContinue
+                      } else {
+                          Start-Process -FilePath "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" -ErrorAction SilentlyContinue
+                      }
+                      Start-Sleep -Seconds 5
+                  }
+              } catch {
+                  Write-Warning "AnyDesk check failed: $($_.Exception.Message)"
+              }
+              
+              # Automatic backup every 15 minutes
+              $timeSinceBackup = (Get-Date) - $lastBackup
+              if ($timeSinceBackup.TotalMinutes -ge 15) {
+                  Write-Host ""
+                  Write-Host "💾 AUTO-BACKUP: Saving your files..." -ForegroundColor Cyan
+                  
+                  try {
+                      # Create backup directory
+                      if (-not (Test-Path "C:\user-backup")) {
+                          New-Item -ItemType Directory -Path "C:\user-backup" -Force | Out-Null
+                      }
+                      
+                      # Backup Desktop
+                      if (Test-Path "$env:USERPROFILE\Desktop") {
+                          Copy-Item -Path "$env:USERPROFILE\Desktop" -Destination "C:\user-backup\Desktop" -Recurse -Force -ErrorAction SilentlyContinue
+                          Write-Host "  ✓ Desktop backed up"
+                      }
+                      
+                      # Backup Documents  
+                      if (Test-Path "$env:USERPROFILE\Documents") {
+                          Copy-Item -Path "$env:USERPROFILE\Documents" -Destination "C:\user-backup\Documents" -Recurse -Force -ErrorAction SilentlyContinue
+                          Write-Host "  ✓ Documents backed up"
+                      }
+                      
+                      # Backup Downloads
+                      if (Test-Path "$env:USERPROFILE\Downloads") {
+                          Copy-Item -Path "$env:USERPROFILE\Downloads" -Destination "C:\user-backup\Downloads" -Recurse -Force -ErrorAction SilentlyContinue
+                          Write-Host "  ✓ Downloads backed up"
+                      }
+                      
+                      # Save backup timestamp
+                      Get-Date -Format 'yyyy-MM-dd HH:mm:ss' > "C:\user-backup\last_backup.txt"
+                      
+                      $lastBackup = Get-Date
+                      Write-Host "💾 Backup completed! Your files are safe." -ForegroundColor Green
+                      Write-Host ""
+                      
+                  } catch {
+                      Write-Warning "Backup failed: $($_.Exception.Message)"
+                  }
+              }
+              
+              Start-Sleep -Seconds 300  # 5 minutes between status updates
+          }
+      
+      - name: "Final Backup Before Shutdown"
+        shell: pwsh
+        run: |
+          Write-Host ""
+          Write-Host "💾 FINAL BACKUP: Saving all your files before shutdown..."
+          Write-Host ""
+          
+          try {
+              # Create backup directory
+              if (-not (Test-Path "C:\user-backup")) {
+                  New-Item -ItemType Directory -Path "C:\user-backup" -Force | Out-Null
+              }
+              
+              # Backup Desktop
+              if (Test-Path "$env:USERPROFILE\Desktop") {
+                  Copy-Item -Path "$env:USERPROFILE\Desktop" -Destination "C:\user-backup\Desktop" -Recurse -Force -ErrorAction SilentlyContinue
+                  $desktopCount = (Get-ChildItem "$env:USERPROFILE\Desktop" -File).Count
+                  Write-Host "✓ Backed up Desktop: $desktopCount files"
+              }
+              
+              # Backup Documents  
+              if (Test-Path "$env:USERPROFILE\Documents") {
+                  Copy-Item -Path "$env:USERPROFILE\Documents" -Destination "C:\user-backup\Documents" -Recurse -Force -ErrorAction SilentlyContinue
+                  $docCount = (Get-ChildItem "$env:USERPROFILE\Documents" -File -Recurse).Count
+                  Write-Host "✓ Backed up Documents: $docCount files"
+              }
+              
+              # Backup Downloads
+              if (Test-Path "$env:USERPROFILE\Downloads") {
+                  Copy-Item -Path "$env:USERPROFILE\Downloads" -Destination "C:\user-backup\Downloads" -Recurse -Force -ErrorAction SilentlyContinue
+                  $downloadCount = (Get-ChildItem "$env:USERPROFILE\Downloads" -File).Count
+                  Write-Host "✓ Backed up Downloads: $downloadCount files"
+              }
+              
+              # Save session info
+              $sessionInfo = "Session End Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`nAnyDesk ID: $env:ANYDESK_ID"
+              $sessionInfo | Out-File -FilePath "C:\user-backup\session_info.txt" -Force
+              
+              # List installed software for next session
+              Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* |
+                  Select-Object DisplayName, DisplayVersion, Publisher, InstallDate |
+                  Where-Object { $_.DisplayName } |
+                  Export-Csv "C:\user-backup\installed_software.csv" -NoTypeInformation
+              
+              Write-Host "✓ Saved installed software list"
+              Write-Host ""
+              Write-Host "✅ FINAL BACKUP COMPLETE!"
+              Write-Host "   All your files will be restored next time you run the workflow"
+              Write-Host ""
+              
+          } catch {
+              Write-Error "Final backup failed: $($_.Exception.Message)"
+          }
+        if: always()
+        
+      - name: "Upload Backup to Cloud"
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-data-backup
+          path: C:\user-backup\
+          retention-days: 30
+        if: always()
+
+  open-link-periodically:
+    runs-on: windows-latest
+    needs: secure-rdp
+    
+    env:
+      SPECIAL_LINK: ${{ github.event.inputs.special_link || 'https://www.google.com' }}
+
+    steps:
+      - name: "Open Link Periodically for 30 Days"
+        shell: pwsh
+        run: |
+          Write-Host ""
+          Write-Host "LINK OPENING JOB - 30 DAY SESSION"
+          Write-Host "=" * 50
+          Write-Host "Runner: windows-latest"
+          Write-Host "OS: Windows Latest (2025)"
+          Write-Host "Special Link: $env:SPECIAL_LINK"
+          Write-Host "Session Duration: 30 days"
+          Write-Host "Link Opening Interval: Every 5 hours"
+          Write-Host "=" * 50
+          Write-Host ""
+          
+          # Set default URL if not provided
+          if ([string]::IsNullOrWhiteSpace($env:SPECIAL_LINK)) {
+              $env:SPECIAL_LINK = "https://www.google.com"
+              Write-Host "Using default link: $env:SPECIAL_LINK"
+          }
+          
+          # Validate URL format
+          try {
+              $uri = [System.Uri]::new($env:SPECIAL_LINK)
+              if (-not ($uri.Scheme -eq "http" -or $uri.Scheme -eq "https")) {
+                  throw "URL must start with http:// or https://"
+              }
+          } catch {
+              Write-Error "Invalid URL format: $($_.Exception.Message)"
+              exit 1
+          }
+          
+          Write-Host "✓ URL validated: $env:SPECIAL_LINK"
+          Write-Host ""
+          
+          # Session configuration
+          $startTime = Get-Date
+          $sessionDuration = New-TimeSpan -Days 30
+          $linkInterval = New-TimeSpan -Hours 5
+          $executionCount = 0
+          $nextExecutionTime = $startTime
+          
+          Write-Host "Session started at: $($startTime.ToString('yyyy-MM-dd HH:mm:ss'))"
+          Write-Host "Session will end at: $($startTime.Add($sessionDuration).ToString('yyyy-MM-dd HH:mm:ss'))"
+          Write-Host "Link will be opened every 5 hours"
+          Write-Host ""
+          
+          # Open link immediately on start
+          Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Opening link (initial execution)..."
+          try {
+              Start-Process $env:SPECIAL_LINK
+              $executionCount++
+              Write-Host "✓ Link opened successfully (Execution #$executionCount)"
+          } catch {
+              Write-Warning "Failed to open link: $($_.Exception.Message)"
+          }
+          
+          $nextExecutionTime = $nextExecutionTime.Add($linkInterval)
+          Write-Host "Next execution scheduled for: $($nextExecutionTime.ToString('yyyy-MM-dd HH:mm:ss'))"
+          Write-Host ""
+          
+          # Main loop - run for 30 days
+          while ((Get-Date) - $startTime -lt $sessionDuration) {
+              $currentTime = Get-Date
+              $elapsed = $currentTime - $startTime
+              $remaining = $sessionDuration - $elapsed
+              $elapsedFormatted = "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $elapsed
+              $remainingFormatted = "{0:dd}d {0:hh}h {0:mm}m {0:ss}s" -f $remaining
+              
+              # Check if it's time to open the link
+              if ($currentTime -ge $nextExecutionTime) {
+                  Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Opening link (Execution #$($executionCount + 1))..."
+                  try {
+                      Start-Process $env:SPECIAL_LINK
+                      $executionCount++
+                      Write-Host "✓ Link opened successfully (Execution #$executionCount)"
+                      Write-Host "  Total executions so far: $executionCount"
+                  } catch {
+                      Write-Warning "Failed to open link: $($_.Exception.Message)"
+                  }
+                  
+                  $nextExecutionTime = $nextExecutionTime.Add($linkInterval)
+                  Write-Host "Next execution scheduled for: $($nextExecutionTime.ToString('yyyy-MM-dd HH:mm:ss'))"
+                  Write-Host ""
+              }
+              
+              # Status update every hour (at the top of each hour)
+              if (($currentTime.Minute -eq 0) -and ($currentTime.Second -lt 10)) {
+                  Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Link Opening Job Active | Elapsed: $elapsedFormatted | Remaining: $remainingFormatted | Executions: $executionCount"
+              }
+              
+              # Sleep for 1 minute to check periodically
+              Start-Sleep -Seconds 60
+          }
+          
+          # Session completed
+          Write-Host ""
+          Write-Host "=" * 50
+          Write-Host "✓ Link opening session completed after 30 days"
+          Write-Host "✓ Total link executions: $executionCount"
+          Write-Host "✓ Session ended at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          Write-Host "=" * 50
