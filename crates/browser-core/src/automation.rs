@@ -183,7 +183,6 @@ impl Default for VisualAutomationBuilder {
 
 /// Natural language automation interpreter
 #[allow(dead_code)]
-#[allow(dead_code)]
 pub struct NaturalLanguageAutomation {
     command_patterns: Vec<CommandPattern>,
     context: AutomationContext,

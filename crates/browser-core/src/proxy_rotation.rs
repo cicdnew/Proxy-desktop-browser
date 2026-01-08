@@ -278,8 +278,7 @@ impl ProxyRotationManager {
             ProxyRotationStrategy::Geographic { country_codes } => {
                 if country_codes.is_empty() {
                     return provider.get_random_working_proxy()
-                        .ok_or_else(|| anyhow!("No working proxies available"))
-                        .map(|p| p.clone());
+                        .ok_or_else(|| anyhow!("No working proxies available")).cloned();
                 }
                 
                 let working_proxies = provider.get_working_proxies();
@@ -291,8 +290,7 @@ impl ProxyRotationManager {
                 if country_proxies.is_empty() {
                     warn!("No proxies found for specified countries, using random working proxy");
                     provider.get_random_working_proxy()
-                        .ok_or_else(|| anyhow!("No working proxies available"))
-                        .map(|p| p.clone())
+                        .ok_or_else(|| anyhow!("No working proxies available")).cloned()
                 } else {
                     let mut rng = rand::thread_rng();
                     Ok((*country_proxies[rng.gen_range(0..country_proxies.len())]).clone())
@@ -328,8 +326,7 @@ impl ProxyRotationManager {
             }
             _ => {
                 provider.get_random_working_proxy()
-                    .ok_or_else(|| anyhow!("No working proxies available"))
-                    .map(|p| p.clone())
+                    .ok_or_else(|| anyhow!("No working proxies available")).cloned()
             }
         }
     }
@@ -781,9 +778,9 @@ impl GeoDiversityManager {
             .sum::<f64>() / countries;
         
         let std_dev = variance.sqrt();
-        let normalized = 1.0 - (std_dev / ideal_per_country).min(1.0);
         
-        normalized
+        
+        1.0 - (std_dev / ideal_per_country).min(1.0)
     }
 }
 

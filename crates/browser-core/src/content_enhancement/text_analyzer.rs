@@ -29,7 +29,7 @@ impl TextAnalyzer {
     pub fn analyze(text: &str) -> TextStatistics {
         let chars: Vec<char> = text.chars().filter(|c| !c.is_whitespace()).collect();
         let words: Vec<&str> = text.split_whitespace().collect();
-        let sentences: Vec<&str> = text.split(|c| c == '.' || c == '!' || c == '?')
+        let sentences: Vec<&str> = text.split(['.', '!', '?'])
             .filter(|s| !s.trim().is_empty())
             .collect();
         let paragraphs: Vec<&str> = text.split("\n\n")

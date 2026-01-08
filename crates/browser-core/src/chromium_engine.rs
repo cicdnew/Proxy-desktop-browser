@@ -265,6 +265,7 @@ pub struct ChromiumTab {
 /// Performance metrics for the engine
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// Represents a EngineMetrics.
+#[derive(Default)]
 pub struct EngineMetrics {
     pub page_loads: u64,
     pub total_load_time_ms: u128,
@@ -276,20 +277,6 @@ pub struct EngineMetrics {
     pub uptime_seconds: u64,
 }
 
-impl Default for EngineMetrics {
-    fn default() -> Self {
-        Self {
-            page_loads: 0,
-            total_load_time_ms: 0,
-            avg_load_time_ms: 0,
-            tabs_created: 0,
-            tabs_closed: 0,
-            cdp_commands_sent: 0,
-            memory_usage_mb: 0,
-            uptime_seconds: 0,
-        }
-    }
-}
 
 /// Engine metadata and version information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -683,13 +670,13 @@ impl ChromiumEngine {
         // Convert kbps to bytes per second for CDP
         // CDP expects bytes per second, -1 means no limit
         let download_throughput = if download > 0.0 {
-            (download as f64 * 1024.0) / 8.0 // kbps to bytes/s
+            (download * 1024.0) / 8.0 // kbps to bytes/s
         } else {
             -1.0 // No limit
         };
         
         let upload_throughput = if upload > 0.0 {
-            (upload as f64 * 1024.0) / 8.0 // kbps to bytes/s
+            (upload * 1024.0) / 8.0 // kbps to bytes/s
         } else {
             -1.0 // No limit
         };

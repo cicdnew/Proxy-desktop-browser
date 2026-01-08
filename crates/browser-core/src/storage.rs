@@ -1305,9 +1305,7 @@ impl SessionManager {
         *sessions = loaded;
 
         // Set active session to default or most recently accessed
-        let active_id = sessions.values()
-            .filter(|s| s.is_default)
-            .next()
+        let active_id = sessions.values().find(|s| s.is_default)
             .or_else(|| sessions.values().max_by_key(|s| s.last_accessed))
             .map(|s| s.session_id.clone());
 

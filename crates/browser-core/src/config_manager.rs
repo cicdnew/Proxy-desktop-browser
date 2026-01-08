@@ -17,6 +17,7 @@ use tracing::{debug, info};
 /// Main application configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// Represents a AppConfig.
+#[derive(Default)]
 pub struct AppConfig {
     /// General application settings
     pub general: GeneralConfig,
@@ -36,20 +37,6 @@ pub struct AppConfig {
     pub features: FeatureFlags,
 }
 
-impl Default for AppConfig {
-    fn default() -> Self {
-        Self {
-            general: GeneralConfig::default(),
-            proxy: ProxyConfig::default(),
-            privacy: PrivacyConfig::default(),
-            performance: PerformanceConfig::default(),
-            network: NetworkConfig::default(),
-            storage: StorageConfig::default(),
-            logging: LoggingConfig::default(),
-            features: FeatureFlags::default(),
-        }
-    }
-}
 
 /// General application settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -401,7 +388,7 @@ impl ConfigManager {
                 let content = tokio::fs::read_to_string(path).await
                     .context("Failed to read config file")?;
                 
-                let loaded_config: AppConfig = if path.extension().map_or(false, |e| e == "json") {
+                let loaded_config: AppConfig = if path.extension().is_some_and(|e| e == "json") {
                     serde_json::from_str(&content).context("Failed to parse JSON config")?
                 } else {
                     toml::from_str(&content).context("Failed to parse TOML config")?
@@ -428,7 +415,7 @@ impl ConfigManager {
         if let Some(path) = &self.config_path {
             let config = self.config.read().await;
             
-            let content = if path.extension().map_or(false, |e| e == "json") {
+            let content = if path.extension().is_some_and(|e| e == "json") {
                 serde_json::to_string_pretty(&*config)?
             } else {
                 toml::to_string_pretty(&*config)?

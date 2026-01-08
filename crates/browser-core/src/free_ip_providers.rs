@@ -288,7 +288,7 @@ impl FreeIpProviderManager {
         if working.is_empty() {
             None
         } else {
-            Some(&working[rand::random::<usize>() % working.len()])
+            Some(working[rand::random::<usize>() % working.len()])
         }
     }
 

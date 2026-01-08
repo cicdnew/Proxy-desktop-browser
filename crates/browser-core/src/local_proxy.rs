@@ -438,7 +438,7 @@ impl LocalProxyManager {
 
     /// Release a port based on proxy URL
     async fn release_port_from_url(&self, addr_str: &str) {
-        if let Some(port_str) = addr_str.split(':').last() {
+        if let Some(port_str) = addr_str.split(':').next_back() {
             if let Ok(port) = port_str.parse::<u16>() {
                 let mut used_ports = self.used_ports.write().await;
                 used_ports.remove(&port);

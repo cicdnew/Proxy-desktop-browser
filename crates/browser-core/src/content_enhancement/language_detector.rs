@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[allow(dead_code)]
-#[allow(dead_code)]
 pub struct AdvancedLanguageDetector {
     /// Minimum text length for reliable detection
     min_text_length: usize,

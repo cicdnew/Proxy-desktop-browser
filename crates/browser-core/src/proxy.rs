@@ -14,7 +14,9 @@ use tracing::warn;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 /// Enumeration of ProxyType variants.
+#[derive(Default)]
 pub enum ProxyType {
+    #[default]
     Direct,
     Http,
     Https,
@@ -22,11 +24,6 @@ pub enum ProxyType {
     Socks5,
 }
 
-impl Default for ProxyType {
-    fn default() -> Self {
-        ProxyType::Direct
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 /// Represents a ProxySettings.

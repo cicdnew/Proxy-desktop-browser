@@ -113,7 +113,7 @@ impl<'a> SecurityManager<'a> {
         }
 
         // Additional validation using validator crate
-        if !url::Url::parse(url).is_ok() {
+        if url::Url::parse(url).is_err() {
             return Err(anyhow!("URL failed validation"));
         }
 

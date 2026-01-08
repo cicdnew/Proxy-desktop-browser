@@ -9,8 +9,10 @@ use chrono::{DateTime, Utc};
 /// Ad verification standards supported
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 /// Enumeration of VerificationStandard variants.
+#[derive(Default)]
 pub enum VerificationStandard {
     /// Media Rating Council standard
+    #[default]
     MRC,
     /// Interactive Advertising Bureau
     IAB,
@@ -20,11 +22,6 @@ pub enum VerificationStandard {
     Custom,
 }
 
-impl Default for VerificationStandard {
-    fn default() -> Self {
-        VerificationStandard::MRC
-    }
-}
 
 /// Ad format types for verification
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

@@ -61,7 +61,6 @@ impl Default for NetworkIntelligenceConfig {
 #[derive(Debug)]
 /// Represents a TrafficAnalyzer.
 #[allow(dead_code)]
-#[allow(dead_code)]
 pub struct TrafficAnalyzer {
     request_history: VecDeque<RequestRecord>,
     domain_stats: HashMap<String, DomainStats>,
@@ -234,7 +233,6 @@ pub struct TrafficReport {
 #[derive(Debug)]
 /// Represents a BandwidthManager.
 #[allow(dead_code)]
-#[allow(dead_code)]
 pub struct BandwidthManager {
     current_usage_bps: u64,
     max_bandwidth_bps: u64,
@@ -361,20 +359,17 @@ pub struct QosManager {
 /// QoS priority levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// Enumeration of QosPriority variants.
+#[derive(Default)]
 pub enum QosPriority {
     Critical,     // User-initiated, blocking
     Interactive,  // User actions, visible
     High,         // Important resources
+    #[default]
     Normal,       // Regular requests
     Low,          // Background, prefetch
     Bulk,         // Large downloads, updates
 }
 
-impl Default for QosPriority {
-    fn default() -> Self {
-        QosPriority::Normal
-    }
-}
 
 /// QoS request
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -545,7 +540,7 @@ impl ConnectionPool {
         // Determine protocol from port
         let protocol = if port == 443 { "https" } else { "http" }.to_string();
         
-        let conns = self.connections.entry(host.to_string()).or_insert_with(Vec::new);
+        let conns = self.connections.entry(host.to_string()).or_default();
         
         // Find idle connection
         if let Some(conn) = conns.iter_mut().find(|c| !c.is_active) {

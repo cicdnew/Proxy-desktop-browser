@@ -278,7 +278,7 @@ impl WebviewManager {
         let tab = tabs.get(tab_id).ok_or_else(|| anyhow!("Tab not found"))?;
         
         if let Some(window) = self.app_handle.get_webview_window(&tab.window_label) {
-            window.eval(&format!("window.location.href = '{}';", url))?;
+            window.eval(format!("window.location.href = '{}';", url))?;
             
             // Update tab info
             drop(tabs);
@@ -497,7 +497,7 @@ impl WebviewManager {
     /// * `tab_id` - The ID of the tab
     /// * `level` - The zoom level (1.0 = 100%)
     pub async fn set_zoom(&self, tab_id: &str, level: f64) -> Result<()> {
-        if level < 0.25 || level > 5.0 {
+        if !(0.25..=5.0).contains(&level) {
             return Err(anyhow!("Zoom level must be between 0.25 and 5.0"));
         }
 
@@ -505,7 +505,7 @@ impl WebviewManager {
         let tab = tabs.get(tab_id).ok_or_else(|| anyhow!("Tab not found"))?;
         
         if let Some(window) = self.app_handle.get_webview_window(&tab.window_label) {
-            window.eval(&format!("document.body.style.zoom = '{}';", level))?;
+            window.eval(format!("document.body.style.zoom = '{}';", level))?;
             
             // Update zoom level in tab info
             drop(tabs);

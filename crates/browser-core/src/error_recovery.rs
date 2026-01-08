@@ -573,7 +573,7 @@ impl ErrorRecoveryManager {
             match operation().await {
                 Ok(result) => return Ok(result),
                 Err(e) => {
-                    let delay = base_delay * 2u64.pow(attempt as u32);
+                    let delay = base_delay * 2u64.pow(attempt);
                     last_error = Some(e.to_string());
                     tokio::time::sleep(Duration::from_millis(delay)).await;
                 }

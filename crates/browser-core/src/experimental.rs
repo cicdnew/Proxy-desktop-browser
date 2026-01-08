@@ -26,7 +26,6 @@ pub enum EngineType {
 
 /// Multi-engine system for optimal rendering
 #[allow(dead_code)]
-#[allow(dead_code)]
 pub struct MultiEngineSystem {
     active_engine: EngineType,
     engine_scores: HashMap<EngineType, f64>,
@@ -538,7 +537,6 @@ impl Default for BehavioralAuth {
 
 /// EXP-4001: Differential Privacy Browsing
 #[allow(dead_code)]
-#[allow(dead_code)]
 pub struct DifferentialPrivacy {
     epsilon: f64,
     delta: f64,
@@ -630,7 +628,6 @@ impl Default for DecoyTrafficGenerator {
 
 /// EXP-4005: Anti-Correlation System
 #[allow(dead_code)]
-#[allow(dead_code)]
 pub struct AntiCorrelationSystem {
     timing_jitter_ms: u64,
     behavior_normalized: bool,
@@ -678,7 +675,6 @@ impl Default for AntiCorrelationSystem {
 // =============================================================================
 
 /// EXP-5001: On-Device Large Language Model
-#[allow(dead_code)]
 #[allow(dead_code)]
 pub struct LocalLlm {
     model_loaded: bool,
@@ -852,6 +848,7 @@ impl Default for GpuRenderConfig {
 /// EXP-6002: 3D Web Browser concept
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// Represents a Spatial3DConfig.
+#[derive(Default)]
 pub struct Spatial3DConfig {
     pub vr_mode_enabled: bool,
     pub ar_overlay_enabled: bool,
@@ -859,16 +856,6 @@ pub struct Spatial3DConfig {
     pub gesture_navigation: bool,
 }
 
-impl Default for Spatial3DConfig {
-    fn default() -> Self {
-        Self {
-            vr_mode_enabled: false,
-            ar_overlay_enabled: false,
-            spatial_tabs: false,
-            gesture_navigation: false,
-        }
-    }
-}
 
 /// EXP-6003: Adaptive Resolution Rendering
 pub struct AdaptiveRenderer {
@@ -924,7 +911,6 @@ pub enum PqcAlgorithm {
 }
 
 /// Represents a PostQuantumCrypto.
-#[allow(dead_code)]
 #[allow(dead_code)]
 pub struct PostQuantumCrypto {
     algorithm: PqcAlgorithm,
@@ -1007,7 +993,6 @@ impl Default for IpfsBrowser {
 }
 
 /// EXP-16002: Blockchain DNS
-#[allow(dead_code)]
 #[allow(dead_code)]
 pub struct BlockchainDns {
     enabled: bool,
@@ -1095,7 +1080,6 @@ impl Default for DecentralizedIdentity {
 // =============================================================================
 
 /// EXP-15001: Quantum Random Numbers
-#[allow(dead_code)]
 #[allow(dead_code)]
 pub struct QuantumRng {
     entropy_source: String,

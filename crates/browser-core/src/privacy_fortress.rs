@@ -77,18 +77,15 @@ impl Default for PrivacyConfig {
 /// Cookie isolation levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 /// Enumeration of CookieIsolationLevel variants.
+#[derive(Default)]
 pub enum CookieIsolationLevel {
     None,      // No isolation
+    #[default]
     Domain,    // Isolate by domain
     Tab,       // Isolate by tab
     Container, // Full container isolation
 }
 
-impl Default for CookieIsolationLevel {
-    fn default() -> Self {
-        CookieIsolationLevel::Domain
-    }
-}
 
 /// Tracker blocker component
 #[derive(Debug)]
@@ -234,7 +231,6 @@ pub struct TrackerStats {
 /// Fingerprint protector component
 #[derive(Debug)]
 /// Represents a FingerprintProtector.
-#[allow(dead_code)]
 #[allow(dead_code)]
 pub struct FingerprintProtector {
     randomized_values: FingerprintValues,

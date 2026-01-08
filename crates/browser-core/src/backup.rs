@@ -186,7 +186,7 @@ impl BackupManager {
                 let id = filename
                     .strip_prefix("backup_")
                     .and_then(|s| s.strip_suffix(".vipb"))
-                    .and_then(|s| s.split('_').last())
+                    .and_then(|s| s.split('_').next_back())
                     .unwrap_or("unknown")
                     .to_string();
 

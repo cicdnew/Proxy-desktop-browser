@@ -106,7 +106,7 @@ impl ProxyValidator {
                 debug!("Retry attempt {} for proxy {}:{}", attempt + 1, proxy.ip, proxy.port);
             }
             
-            match self.validate_single_attempt(&settings, &proxy).await {
+            match self.validate_single_attempt(&settings, proxy).await {
                 Ok(result) => {
                     if result.is_working {
                         best_result = Some(result);

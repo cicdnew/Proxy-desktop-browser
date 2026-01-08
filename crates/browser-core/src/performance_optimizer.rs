@@ -89,19 +89,16 @@ pub struct CacheEntry {
 /// Cache priority levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// Enumeration of CachePriority variants.
+#[derive(Default)]
 pub enum CachePriority {
     Critical,   // Core resources (HTML, critical CSS)
     High,       // Important resources (JS, fonts)
+    #[default]
     Medium,     // Regular resources (images)
     Low,        // Optional resources (analytics, ads)
     Prefetch,   // Prefetched resources
 }
 
-impl Default for CachePriority {
-    fn default() -> Self {
-        CachePriority::Medium
-    }
-}
 
 /// Access prediction model using simple frequency analysis
 #[derive(Debug, Default)]
@@ -119,7 +116,7 @@ impl AccessPredictionModel {
         
         // Record transition
         if let Some(ref last) = self.last_url {
-            let transitions = self.transition_map.entry(last.clone()).or_insert_with(HashMap::new);
+            let transitions = self.transition_map.entry(last.clone()).or_default();
             *transitions.entry(url.to_string()).or_insert(0) += 1;
         }
         

@@ -71,17 +71,14 @@ pub struct BrowserSettings {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 /// Enumeration of WebRtcPolicy variants.
+#[derive(Default)]
 pub enum WebRtcPolicy {
     Default,
+    #[default]
     DisableNonProxiedUdp,
     Disabled,
 }
 
-impl Default for WebRtcPolicy {
-    fn default() -> Self {
-        WebRtcPolicy::DisableNonProxiedUdp
-    }
-}
 
 impl Default for BrowserSettings {
     fn default() -> Self {
@@ -460,7 +457,7 @@ impl DownloadManager {
     /// Extract filename from URL
     fn extract_filename_from_url(&self, url: &str) -> String {
         url.split('/')
-            .last()
+            .next_back()
             .and_then(|s| s.split('?').next())
             .filter(|s| !s.is_empty())
             .unwrap_or("download")
