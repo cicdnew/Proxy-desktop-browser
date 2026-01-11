@@ -47,14 +47,14 @@
   let historySearchQuery = $state('');
   
   // Derived state with Svelte 5 runes
-  let activeTab = $derived(tabs.find(t => t.tab_id === activeTabId) || null);
-  let filteredTabs = $derived(tabSearchQuery 
+  let activeTab: BrowserTab | null = $derived(tabs.find(t => t.tab_id === activeTabId) || null);
+  let filteredTabs: BrowserTab[] = $derived(tabSearchQuery 
     ? tabs.filter(t => 
         t.title?.toLowerCase().includes(tabSearchQuery.toLowerCase()) ||
         t.url?.toLowerCase().includes(tabSearchQuery.toLowerCase())
       )
     : tabs);
-  let filteredHistory = $derived(historySearchQuery
+  let filteredHistory: HistoryEntry[] = $derived(historySearchQuery
     ? history.filter(h =>
         h.title?.toLowerCase().includes(historySearchQuery.toLowerCase()) ||
         h.url?.toLowerCase().includes(historySearchQuery.toLowerCase())
