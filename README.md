@@ -2,6 +2,27 @@
 
 A privacy-focused desktop browser built with Tauri, Rust, and Svelte that provides advanced proxy management, fingerprint protection, and tab isolation.
 
+## ⚡ Quick Start (Fixed!)
+
+The white screen issue has been resolved! To run the app:
+
+```bash
+cd ui-tauri
+./setup.sh        # Linux/macOS
+# or
+setup.bat         # Windows
+```
+
+**Or manually:**
+```bash
+cd ui-tauri
+npm install --legacy-peer-deps
+npm run build
+npm run tauri dev
+```
+
+📖 See [ui-tauri/SETUP.md](ui-tauri/SETUP.md) for detailed setup instructions.
+
 ## 🚀 Features
 
 ### Privacy & Security
